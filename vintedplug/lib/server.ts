@@ -6,6 +6,7 @@ import {getChatGPTUser} from "@/app/chatgpt-auth";
 import {ZodError} from "zod";
 import {EARNING_GUIDE_ID,canEditEarningGuide} from "./guide-access";
 import {normalizeGuideChapters} from "./earning-guide";
+import {textAIConfig} from "./ai-text";
 export class HttpError extends Error{constructor(public status:number,message:string){super(message);}}
 export async function owner(){const u=await getChatGPTUser();if(!u)throw new HttpError(401,"Zaloguj się, aby korzystać z panelu.");return u.userId;}
 export function apiError(e:unknown){
@@ -32,7 +33,7 @@ export async function guideEditPermission(uid:string,boundOwner:string|undefined
 export async function snapshot(uid:string){
  const db=getDb();const [a,i,e,g]=await Promise.all([db.select().from(accounts).where(eq(accounts.owner,uid)).orderBy(accounts.createdAt),db.select().from(items).where(eq(items.owner,uid)).orderBy(desc(items.createdAt)),db.select().from(expenses).where(eq(expenses.owner,uid)).orderBy(desc(expenses.date)),db.select().from(earningGuides).where(eq(earningGuides.id,EARNING_GUIDE_ID)).get()]);
  const strip=<T extends {owner:string}>(r:T)=>{const {owner:_,...rest}=r;return rest;};
- return {accounts:a.map(strip),items:i.map(strip),expenses:e.map(strip),earningGuide:g?{chapters:normalizeGuideChapters(g.chapters),revision:g.revision,updatedAt:g.updatedAt}:null,config:{guideEditor:await guideEditPermission(uid,g?.owner),textAI:!!(env.OPENAI_API_KEY&&env.OPENAI_TEXT_MODEL),imageAI:!!(env.OPENAI_API_KEY&&env.OPENAI_IMAGE_MODEL&&env.IMAGE_AI_ENABLED==="true")}};
+ return {accounts:a.map(strip),items:i.map(strip),expenses:e.map(strip),earningGuide:g?{chapters:normalizeGuideChapters(g.chapters),revision:g.revision,updatedAt:g.updatedAt}:null,config:{guideEditor:await guideEditPermission(uid,g?.owner),textAI:!!textAIConfig(env),imageAI:!!(env.OPENAI_API_KEY&&env.OPENAI_IMAGE_MODEL&&env.IMAGE_AI_ENABLED==="true")}};
 }
 export async function saveUpload(uid:string,bytes:ArrayBuffer|Uint8Array,mime:string){
  if(!env.BUCKET)throw new HttpError(503,"Magazyn zdjęć jest chwilowo niedostępny.");

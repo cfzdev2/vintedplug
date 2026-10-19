@@ -1,10 +1,11 @@
 import {env} from "cloudflare:workers";
 import {owner,body,apiError,ownItem,ownUpload,reserveAI,saveUpload,HttpError} from "@/lib/server";
-import {aiRequestInput,generateAIText,AITextError} from "@/lib/ai-text";
+import {aiRequestInput,generateAIText,AITextError,textAIConfig} from "@/lib/ai-text";
 export const dynamic="force-dynamic";
 export async function POST(req:Request){try{
- const uid=await owner(),data=aiRequestInput.parse(await body(req)),item=await ownItem(uid,data.itemId),image=data.kind==="image",model=image?env.OPENAI_IMAGE_MODEL:env.OPENAI_TEXT_MODEL;
- if(!env.OPENAI_API_KEY||!model||(image&&env.IMAGE_AI_ENABLED!=="true"))throw new HttpError(503,"Generowanie AI czeka na podłączenie dostawcy. Dane i zdjęcia możesz już zapisywać w panelu.");
+ const uid=await owner(),data=aiRequestInput.parse(await body(req)),item=await ownItem(uid,data.itemId),image=data.kind==="image",model=env.OPENAI_IMAGE_MODEL,textConfig=textAIConfig(env);
+ if(image&&(!env.OPENAI_API_KEY||!model||env.IMAGE_AI_ENABLED!=="true"))throw new HttpError(503,"Edycja zdjęć AI czeka na podłączenie dostawcy. Zdjęcia możesz już zapisywać w panelu.");
+ if(!image&&!textConfig)throw new HttpError(503,"Generowanie tekstów czeka na podłączenie klucza Gemini przez właściciela panelu.");
  const refund=await reserveAI(uid,image?"image":"text");
  try{
   if(image){
@@ -16,6 +17,6 @@ export async function POST(req:Request){try{
    if(!res.ok)throw new HttpError(502,"Dostawca AI nie wykonał edycji. Spróbuj ponownie później.");const out=await res.json() as {data?:{b64_json?:string}[]};const encoded=out.data?.[0]?.b64_json;if(!encoded||encoded.length>22_000_000)throw new HttpError(502,"Nieprawidłowy wynik edycji.");
    return Response.json(await saveUpload(uid,Uint8Array.from(atob(encoded),c=>c.charCodeAt(0)),"image/webp"));
   }
-  return Response.json(await generateAIText({apiKey:env.OPENAI_API_KEY,model},item,{kind:data.kind==="listing"?"listing":"reply",keywords:data.keywords,question:data.question}),{headers:{"Cache-Control":"no-store"}});
+  return Response.json(await generateAIText(textConfig!,item,{kind:data.kind==="listing"?"listing":"reply",keywords:data.keywords,question:data.question}),{headers:{"Cache-Control":"no-store"}});
  }catch(e){await refund();if(e instanceof AITextError)throw new HttpError(e.status,e.message);throw e;}
 }catch(e){return apiError(e);}}

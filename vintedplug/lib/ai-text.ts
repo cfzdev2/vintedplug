@@ -2,6 +2,13 @@ import {z} from "zod";
 import type {Item} from "./domain";
 
 export const KEYWORDS_MAX_LENGTH=500;
+export const DEFAULT_GEMINI_TEXT_MODEL="gemini-3.5-flash-lite";
+export type TextAIConfig={apiKey:string;model:string};
+export function textAIConfig(env:{GEMINI_API_KEY?:string;GEMINI_TEXT_MODEL?:string}):TextAIConfig|null{
+ const apiKey=env.GEMINI_API_KEY?.trim(),model=env.GEMINI_TEXT_MODEL?.trim()||DEFAULT_GEMINI_TEXT_MODEL;
+ if(!apiKey||!/^gemini-[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(model))return null;
+ return {apiKey,model};
+}
 export const aiRequestInput=z.object({
  kind:z.enum(["listing","reply","image"]),
  itemId:z.string().trim().min(1).max(80),
@@ -28,7 +35,7 @@ export class AITextError extends Error{
  constructor(status:number,message:string){super(message);this.name="AITextError";this.status=status;}
 }
 
-export function buildTextRequest(model:string,item:ListingFacts,input:TextInput){
+export function buildTextRequest(item:ListingFacts,input:TextInput){
  // Explicitly select listing facts: financial and account data never go to AI.
  const {name,brand,category,size,condition,description,measurements,flaws}=item;
  const instructions=[
@@ -44,22 +51,33 @@ export function buildTextRequest(model:string,item:ListingFacts,input:TextInput)
  ].join("\n");
  const payload={item:{name,brand,category,size,condition,description,measurements,flaws},...(input.kind==="listing"?{keywords:input.keywords?.trim()??""}:{buyerQuestion:input.question?.trim()??""})};
  return {
-  model,instructions,input:[{role:"user",content:JSON.stringify(payload)}],max_output_tokens:2200,store:false,
-  ...(input.kind==="listing"?{text:{format:{type:"json_schema",name:"vintedplug_listing",strict:true,schema:{
-   type:"object",properties:{title:{type:"string"},description:{type:"string"},category:{type:"string",enum:[category]}},required:["title","description","category"],additionalProperties:false,
-  }}}}:{}),
+  systemInstruction:{parts:[{text:instructions}]},
+  contents:[{role:"user",parts:[{text:JSON.stringify(payload)}]}],
+  generationConfig:{maxOutputTokens:2200,candidateCount:1,
+   ...(input.kind==="listing"?{responseFormat:{text:{mimeType:"APPLICATION_JSON",schema:{
+    type:"object",properties:{title:{type:"string"},description:{type:"string"},category:{type:"string",enum:[category]}},required:["title","description","category"],additionalProperties:false,
+   }}}}:{}),
+  },
  };
 }
 
-const responseEnvelope=z.object({status:z.string(),output:z.array(z.object({type:z.string(),content:z.array(z.object({type:z.string(),text:z.string().optional(),refusal:z.string().optional()})).optional()}))});
+const responseEnvelope=z.object({
+ promptFeedback:z.object({blockReason:z.string().optional()}).optional(),
+ candidates:z.array(z.object({
+  finishReason:z.string().optional(),
+  content:z.object({role:z.string().optional(),parts:z.array(z.object({text:z.string().optional(),thought:z.boolean().optional()}))}).optional(),
+ })).max(1).optional(),
+});
+const blockedFinishReasons=new Set(["SAFETY","RECITATION","BLOCKLIST","PROHIBITED_CONTENT","SPII","IMAGE_SAFETY","IMAGE_PROHIBITED_CONTENT"]);
 export function parseTextResponse(payload:unknown,kind:TextKind,category:string):ListingDraft|{text:string}{
  const checked=responseEnvelope.safeParse(payload);
  if(!checked.success)throw new AITextError(502,"Dostawca AI zwrócił nieprawidłową odpowiedź. Spróbuj ponownie.");
  const response=checked.data;
- if(response.status!=="completed")throw new AITextError(502,"Generowanie nie zostało ukończone. Spróbuj ponownie.");
- const content=response.output.filter(o=>o.type==="message").flatMap(o=>o.content??[]);
- if(content.some(c=>c.type==="refusal"))throw new AITextError(422,"AI nie przygotowało tekstu dla tych danych. Sprawdź kartę rzeczy i słowa kluczowe.");
- const text=content.filter(c=>c.type==="output_text").map(c=>c.text??"").join("\n").trim();
+ const candidate=response.candidates?.[0];
+ if((response.promptFeedback?.blockReason&&response.promptFeedback.blockReason!=="BLOCK_REASON_UNSPECIFIED")||blockedFinishReasons.has(candidate?.finishReason??""))throw new AITextError(422,"Gemini nie przygotowało tekstu dla tych danych. Sprawdź kartę rzeczy i słowa kluczowe.");
+ if(!candidate||candidate.finishReason!=="STOP")throw new AITextError(502,"Generowanie nie zostało ukończone. Spróbuj ponownie.");
+ if(candidate.content?.role&&candidate.content.role!=="model")throw new AITextError(502,"Dostawca AI zwrócił nieprawidłową odpowiedź. Spróbuj ponownie.");
+ const text=candidate.content?.parts.filter(p=>!p.thought).map(p=>p.text??"").join("").trim()??"";
  if(!text)throw new AITextError(502,"AI nie zwróciło tekstu. Spróbuj ponownie.");
  if(kind==="reply"){
   if(text.length>5000)throw new AITextError(502,"Odpowiedź AI jest zbyt długa. Spróbuj ponownie.");
@@ -72,15 +90,23 @@ export function parseTextResponse(payload:unknown,kind:TextKind,category:string)
  return draft.data;
 }
 
-export async function generateAIText(config:{apiKey:string;model:string},item:ListingFacts,input:TextInput,fetcher:typeof fetch=fetch){
+export async function generateAIText(config:TextAIConfig,item:ListingFacts,input:TextInput,fetcher:typeof fetch=fetch){
  let response:Response;
- try{response=await fetcher("https://api.openai.com/v1/responses",{
-  method:"POST",headers:{Authorization:`Bearer ${config.apiKey}`,"Content-Type":"application/json"},
-  body:JSON.stringify(buildTextRequest(config.model,item,input)),signal:AbortSignal.timeout(60000),
+ try{response=await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.model)}:generateContent`,{
+  method:"POST",headers:{"x-goog-api-key":config.apiKey,"Content-Type":"application/json"},
+  body:JSON.stringify(buildTextRequest(item,input)),signal:AbortSignal.timeout(60000),
  });}catch{throw new AITextError(502,"Nie udało się połączyć z dostawcą AI. Spróbuj ponownie później.");}
  if(!response.ok){
-  if(response.status===429)throw new AITextError(503,"Dostawca AI chwilowo nie przyjmuje kolejnych żądań. Spróbuj później.");
-  if(response.status===401||response.status===403)throw new AITextError(503,"Połączenie z dostawcą AI wymaga sprawdzenia konfiguracji przez właściciela panelu.");
+  if(response.status===429)throw new AITextError(503,"Wykorzystano dostępny limit Gemini. Spróbuj ponownie później.");
+  let invalidKey=false;
+  if(response.status===400){
+   try{
+    const error=await response.json() as {error?:{details?:{reason?:string}[]}};
+    invalidKey=Array.isArray(error.error?.details)&&error.error.details.some(d=>d?.reason==="API_KEY_INVALID");
+   }catch{/* Keep provider details out of client responses. */}
+  }
+  if(invalidKey||[401,403,404].includes(response.status))throw new AITextError(503,"Połączenie z Gemini wymaga sprawdzenia konfiguracji przez właściciela panelu.");
+  if(response.status===402)throw new AITextError(503,"Gemini wymaga sprawdzenia planu i limitów projektu przez właściciela panelu.");
   throw new AITextError(502,"Dostawca AI nie przygotował tekstu. Spróbuj ponownie później.");
  }
  let payload:unknown;
