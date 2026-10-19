@@ -19,6 +19,31 @@ export type KnowledgeTopic={id:string;title:string;description:string;category:"
 
 export const KNOWLEDGE_TOPICS:KnowledgeTopic[]=[
  {
+  id:"listing-review",title:"Moja metoda: sprawdzanie ogłoszeń",description:"Miejsce na Twój proces przygotowania ofert i obserwacje dotyczące weryfikacji.",category:"Moje metody",minutes:3,icon:"review",methodId:"review",
+  takeaway:"Opisz sprawdzony przez Ciebie proces oraz jego wyniki. Obserwację autora warto odróżnić od oficjalnej zasady Vinted.",
+  sections:[
+   {title:"Punkt wyjścia",paragraphs:["Przed wysłaniem oferty porównaj kategorię, markę, rozmiar i stan z rzeczywistym przedmiotem. Uzupełnij potrzebne dowody autentyczności. Jeśli ogłoszenie jest ukryte, zacznij od poprawek wymienionych w wiadomości Vinted."],sources:["listings"]},
+   {title:"Jak dokumentować własny test",bullets:["Zapisz datę, kategorię rzeczy, komplet zdjęć i treść komunikatu.","Porównuj podobne przypadki; zanotuj także oferty, w których metoda nie pomogła.","Unikaj obietnicy pominięcia kontroli. Opisz kroki przygotowania oferty oraz zaobserwowany wynik."]},
+  ],
+ },
+ {
+  id:"after-ban",title:"Moja metoda: po banie i nowe konto",description:"Odwołanie, dokumentacja sprawy i warunki dozwolonego powrotu na platformę.",category:"Moje metody",minutes:4,icon:"recovery",methodId:"recovery",
+  takeaway:"Zacznij od decyzji i odwołania. Możliwość utworzenia nowego konta zależy od reguł oraz okoliczności blokady.",
+  sections:[
+   {title:"Odwołanie krok po kroku",bullets:["Otwórz link z oficjalnego powiadomienia o decyzji.","Wskaż, z czym się nie zgadzasz, i dołącz dowody odnoszące się do podanej przyczyny.","Vinted podaje termin 6 miesięcy od powiadomienia i jedno odwołanie od danej decyzji moderacyjnej. Zachowaj kopię zgłoszenia i odpowiedzi."],sources:["appeals"]},
+   {title:"Kiedy nowe konto jest dopuszczone",paragraphs:["Regulamin zasadniczo pozwala na jedno konto. Wyraźny wyjątek obejmuje nowe konto po zablokowaniu poprzedniego z powodu bezprawnego przejęcia. Dopuszcza też oddzielne konto zwykłe i Pro, gdy Pro jest dostępne. Vinted może uniemożliwić utworzenie nowego konta po blokadzie. Sprawdź decyzję i uzyskane instrukcje wsparcia, zanim zaczniesz ponownie."],sources:["terms"]},
+   {title:"Przygotuj opis swojej sprawy",bullets:["Przyczyna i data blokady → dowody → odwołanie → odpowiedź Vinted → dalsze kroki.","W przykładzie usuń dane osobowe i pokaż, na jakiej podstawie dalsze korzystanie było dozwolone."]},
+  ],
+ },
+ {
+  id:"stock-sourcing",title:"Moja metoda: pozyskiwanie towaru",description:"Twoje źródła, filtry, kryteria zakupu i rzeczywiste przykłady okazji.",category:"Moje metody",minutes:4,icon:"stock",methodId:"method",relatedCourse:true,
+  takeaway:"Kupno oceniaj po pełnym koszcie i rzeczywistym wyniku. Wybierz kanał sprzedaży, który dopuszcza Twój model handlu.",
+  sections:[
+   {title:"Co powinna opisywać metoda",bullets:["Źródło rzeczy i kategorie, na których się znasz.","Frazy, filtry i sposób ręcznego sprawdzania okazji.","Kontrolę autentyczności, stanu i kosztów przygotowania.","Maksymalną cenę zakupu, budżet oraz powody, dla których odpuszczasz.","Rzeczywisty przykład: zakup + dostawa + przygotowanie → sprzedaż → wynik i czas."]},
+   {title:"Wspólna treść z poradnikiem",paragraphs:["Ten opis korzysta z rozdziału „Moja metoda wyszukiwania” w poradniku zarabiania. Edycja w dowolnym z tych miejsc aktualizuje ten sam materiał. W pełnym poradniku znajdziesz też ustawienia wyszukiwania, personalizację i ocenę okazji."]},
+  ],
+ },
+ {
   id:"rules-sales",title:"Regulamin a skuteczna sprzedaż",description:"Co poprawić w ofercie i czego unikać, żeby sprzedawać zgodnie z zasadami.",category:"Sprzedaż",minutes:4,icon:"sales",
   takeaway:"Zacznij od poprawnej oferty, a efekty zmian oceniaj na własnych wynikach sprzedaży.",
   sections:[
@@ -48,31 +73,6 @@ export const KNOWLEDGE_TOPICS:KnowledgeTopic[]=[
    {title:"Zdjęcia AI: sprawdź regułę publikacji",paragraphs:["Odczytana wersja publicznych Reguł katalogu wymaga wiernego pokazania rzeczy i wskazuje zakaz edytowania zdjęć. Przed publikacją efektu ze Studia sprawdź aktualną regułę oraz instrukcję w formularzu Vinted. Samo oznaczenie AI nie przesądza o dopuszczalności konkretnej przeróbki. Zachowuj oryginały."],sources:["catalog"]},
    {title:"Ukrycie oferty i usunięcie to różne sytuacje",paragraphs:["Ukryte ogłoszenie popraw zgodnie z komunikatem. Vinted wskazuje, że po wymaganych zmianach może ponownie stać się widoczne. Przy usunięciu sprawdź uzasadnienie i dostępną ścieżkę odwołania. Ponawianie tego samego problemu może prowadzić do kolejnych ograniczeń."],sources:["listings"]},
    {title:"Zachowaj dowody",bullets:["Zapisz komunikat, datę, identyfikator oferty i zdjęcia przed zmianą.","Opisz, co poprawiłeś. Jeśli decyzja jest błędna, przygotuj konkretne dowody zamiast wysyłać wiele sprzecznych zgłoszeń."]},
-  ],
- },
- {
-  id:"listing-review",title:"Moja metoda: sprawdzanie ogłoszeń",description:"Miejsce na Twój proces przygotowania ofert i obserwacje dotyczące weryfikacji.",category:"Moje metody",minutes:3,icon:"review",methodId:"review",
-  takeaway:"Opisz sprawdzony przez Ciebie proces oraz jego wyniki. Obserwację autora warto odróżnić od oficjalnej zasady Vinted.",
-  sections:[
-   {title:"Punkt wyjścia",paragraphs:["Przed wysłaniem oferty porównaj kategorię, markę, rozmiar i stan z rzeczywistym przedmiotem. Uzupełnij potrzebne dowody autentyczności. Jeśli ogłoszenie jest ukryte, zacznij od poprawek wymienionych w wiadomości Vinted."],sources:["listings"]},
-   {title:"Jak dokumentować własny test",bullets:["Zapisz datę, kategorię rzeczy, komplet zdjęć i treść komunikatu.","Porównuj podobne przypadki; zanotuj także oferty, w których metoda nie pomogła.","Unikaj obietnicy pominięcia kontroli. Opisz kroki przygotowania oferty oraz zaobserwowany wynik."]},
-  ],
- },
- {
-  id:"after-ban",title:"Moja metoda: po banie i nowe konto",description:"Odwołanie, dokumentacja sprawy i warunki dozwolonego powrotu na platformę.",category:"Moje metody",minutes:4,icon:"recovery",methodId:"recovery",
-  takeaway:"Zacznij od decyzji i odwołania. Możliwość utworzenia nowego konta zależy od reguł oraz okoliczności blokady.",
-  sections:[
-   {title:"Odwołanie krok po kroku",bullets:["Otwórz link z oficjalnego powiadomienia o decyzji.","Wskaż, z czym się nie zgadzasz, i dołącz dowody odnoszące się do podanej przyczyny.","Vinted podaje termin 6 miesięcy od powiadomienia i jedno odwołanie od danej decyzji moderacyjnej. Zachowaj kopię zgłoszenia i odpowiedzi."],sources:["appeals"]},
-   {title:"Kiedy nowe konto jest dopuszczone",paragraphs:["Regulamin zasadniczo pozwala na jedno konto. Wyraźny wyjątek obejmuje nowe konto po zablokowaniu poprzedniego z powodu bezprawnego przejęcia. Dopuszcza też oddzielne konto zwykłe i Pro, gdy Pro jest dostępne. Vinted może uniemożliwić utworzenie nowego konta po blokadzie. Sprawdź decyzję i uzyskane instrukcje wsparcia, zanim zaczniesz ponownie."],sources:["terms"]},
-   {title:"Przygotuj opis swojej sprawy",bullets:["Przyczyna i data blokady → dowody → odwołanie → odpowiedź Vinted → dalsze kroki.","W przykładzie usuń dane osobowe i pokaż, na jakiej podstawie dalsze korzystanie było dozwolone."]},
-  ],
- },
- {
-  id:"stock-sourcing",title:"Moja metoda: pozyskiwanie towaru",description:"Twoje źródła, filtry, kryteria zakupu i rzeczywiste przykłady okazji.",category:"Moje metody",minutes:4,icon:"stock",methodId:"method",relatedCourse:true,
-  takeaway:"Kupno oceniaj po pełnym koszcie i rzeczywistym wyniku. Wybierz kanał sprzedaży, który dopuszcza Twój model handlu.",
-  sections:[
-   {title:"Co powinna opisywać metoda",bullets:["Źródło rzeczy i kategorie, na których się znasz.","Frazy, filtry i sposób ręcznego sprawdzania okazji.","Kontrolę autentyczności, stanu i kosztów przygotowania.","Maksymalną cenę zakupu, budżet oraz powody, dla których odpuszczasz.","Rzeczywisty przykład: zakup + dostawa + przygotowanie → sprzedaż → wynik i czas."]},
-   {title:"Wspólna treść z poradnikiem",paragraphs:["Ten opis korzysta z rozdziału „Moja metoda wyszukiwania” w poradniku zarabiania. Edycja w dowolnym z tych miejsc aktualizuje ten sam materiał. W pełnym poradniku znajdziesz też ustawienia wyszukiwania, personalizację i ocenę okazji."]},
   ],
  },
 ];
