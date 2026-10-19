@@ -1,0 +1,4 @@
+vintedplug
+Kod bazowy: a7cdedd15f6b95eea52dc3664b62ca88c8e09771
+Eksport do pracy lokalnej: 2026-10-19
+Dodatki: instalacja Windows, lokalna baza i konto deweloperskie.

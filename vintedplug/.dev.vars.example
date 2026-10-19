@@ -1,0 +1,8 @@
+# Ustawienia lokalnego konta deweloperskiego. To nie są dane logowania do Vinted.
+VP_GUIDE_AUTHOR_EMAIL="local@vintedplug.test"
+IMAGE_AI_ENABLED="false"
+
+# Opcjonalnie, dopiero po wybraniu i skonfigurowaniu dostawcy AI:
+# OPENAI_API_KEY=""
+# OPENAI_TEXT_MODEL=""
+# OPENAI_IMAGE_MODEL=""
