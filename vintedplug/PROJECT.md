@@ -30,6 +30,14 @@ Generowanie tekstu oraz edycja zdjęć mają przygotowane trasy serwerowe, ale p
 
 Trasy stosują limity serwerowe 20 generacji tekstu i 3 edycji zdjęć na dzień UTC na użytkownika. Nieudane żądanie zwraca limit. Włączenie prawdziwych modeli wymaga sprawdzenia ich zgodności, uprawnień konta, kosztu i jakości. Nie wykonywano płatnych wywołań AI podczas budowy tej wersji.
 
+## Asystent: słowa kluczowe i edycja tekstu — 19 października 2026
+
+W trybie „Ogłoszenie” Asystent ma opcjonalne pole słów kluczowych (do 500 znaków). Wskazówki są przekazywane oddzielnie od faktów i instrukcji; dane z karty mają pierwszeństwo. Puste pole nie jest wymagane do generowania. Frazy są przechowywane w pamięci widoku osobno dla każdej rzeczy, a nie w bazie. Nie są używane przez deterministyczny szablon. Tytuł i opis, zarówno z szablonu, jak i z AI, można poprawić przed skopiowaniem lub przeniesieniem do formularza rzeczy. Zapis następuje po zatwierdzeniu formularza.
+
+`lib/ai-text.ts` zawiera walidację żądania, konstrukcję danych i instrukcji, żądanie Responses API z JSON Schema dla ogłoszenia oraz kontrolę odpowiedzi. Do modelu trafiają wyłącznie dane opisowe rzeczy, bez kosztu zakupu, minimum zarobku ani danych konta. Niekompletne wyniki, odmowy, puste pola, błędna kategoria i przekroczenia długości nie są przyjmowane jako gotowy tekst. Błędy dostawcy są zamieniane na własne komunikaty, bez zwracania surowych szczegółów. Dotychczasowe autoryzowanie rzeczy i limity serwerowe z refundacją nieudanego żądania pozostają aktywne. Zmiana rzeczy, trybu lub rewizji unieważnia oczekujący wynik, aby nie przypisać go do innego przedmiotu.
+
+Integrację przygotowano na podstawie oficjalnej dokumentacji OpenAI Responses i Structured Outputs (sprawdzono 19.10.2026). Testy dostawcy używają wyłącznie atrap; nie wykonują płatnych połączeń. W konfiguracji hostingu potwierdzono brak `OPENAI_API_KEY` i `OPENAI_TEXT_MODEL`. Uruchomienie faktycznego generowania i ocena jego jakości wymagają dokończenia wcześniejszego połączenia OpenAI Developers, bezpiecznej konfiguracji sekretu i wyboru dostępnego modelu. Nie pozyskuj klucza przez czat ani repozytorium; stosuj procedurę `openai-platform-api-key` z pluginu OpenAI Developers, zgodnie z instrukcją Sites.
+
 ## Autorski poradnik — 19 października 2026
 
 Baza wiedzy zawiera osobny poradnik „Zarabianie na Vinted”. Sześć rozdziałów: ustawienie wyszukiwania, personalizacja polecanych ofert, własna metoda, ocena okazji, przygotowanie sprzedaży i przykłady. Materiał startowy odwołuje się do oficjalnych opisów Vinted (`/help/35`, `/help/409`, sprawdzone 19.10.2026). Metoda autora i wyniki pozostają puste do uzupełnienia; treści nie obiecują konkretnych efektów personalizacji.
