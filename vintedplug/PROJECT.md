@@ -32,11 +32,19 @@ Trasy stosują limity serwerowe 20 generacji tekstu i 3 edycji zdjęć na dzień
 
 ## Autorski poradnik — 19 października 2026
 
-Baza wiedzy zawiera kategorię „Zarabianie” i osobny poradnik „Zarabianie na Vinted”. Sześć rozdziałów: ustawienie wyszukiwania, personalizacja polecanych ofert, własna metoda, ocena okazji, przygotowanie sprzedaży i przykłady. Materiał startowy odwołuje się do oficjalnych opisów Vinted (`/help/35`, `/help/409`, sprawdzone 19.10.2026). Metoda autora i wyniki pozostają puste do uzupełnienia; treści nie obiecują konkretnych efektów personalizacji.
+Baza wiedzy zawiera osobny poradnik „Zarabianie na Vinted”. Sześć rozdziałów: ustawienie wyszukiwania, personalizacja polecanych ofert, własna metoda, ocena okazji, przygotowanie sprzedaży i przykłady. Materiał startowy odwołuje się do oficjalnych opisów Vinted (`/help/35`, `/help/409`, sprawdzone 19.10.2026). Metoda autora i wyniki pozostają puste do uzupełnienia; treści nie obiecują konkretnych efektów personalizacji.
 
 Autor może edytować treść każdego rozdziału i przykład z praktyki. API zapisuje poradnik w D1, waliduje kompletność rozdziałów i kontroluje rewizję. Tekst jest wyświetlany jako tekst, bez wykonywania HTML. Kopia JSON zawiera też poradnik. W trybie demo edycja jest wyłączona; przełączenie na własny panel zachowuje widok poradnika.
 
 Poradnik jest wspólnym materiałem dla odbiorców Site, a nie oddzielną metodą każdego sprzedawcy. `VP_GUIDE_AUTHOR_EMAIL`, konfigurowane wyłącznie na serwerze, uprawnia wskazany zweryfikowany adres do pierwszego zapisu. Ten zapis wiąże autorstwo z uwierzytelnionym ID użytkownika w danym Site; kolejne zmiany wymagają tego ID. Pozostali użytkownicy mają tylko odczyt. Brak konfiguracji zamyka możliwość pierwszego zapisu. E-mail i ID autora nie są udostępniane w danych panelu. Obecny dostęp Site nadal jest prywatny.
+
+## Rozbudowa Bazy wiedzy — 19 października 2026
+
+Sześć głównych tematów: regulamin a sprzedaż; limity, płatności i polskie podatki; ograniczanie ryzyka blokady; metoda autora dotycząca sprawdzania ogłoszeń; odwołanie po banie i warunki nowego konta; pozyskiwanie towaru. Teksty z oficjalnymi źródłami i datą sprawdzenia znajdują się w `lib/knowledge-base.ts`, a karty, wyszukiwarka, filtry i czytnik w `components/vp/knowledge-base.tsx`. Krótkie wcześniejsze porady pozostają w rozwijanej części. Pełny sześcioczęściowy poradnik nadal działa.
+
+Trzy metody mają edytor autora: treść do 6000 znaków i przykład do 2000. Metoda pozyskiwania korzysta z istniejącego rozdziału `method`; nie powstaje druga kopia treści. `review` i `recovery` są dodatkowymi wpisami we wcześniejszym dokumencie JSON poradnika. Odczyt uzupełnia stary zestaw sześciu rozdziałów do ośmiu, zachowując zapisane treści, autora, rewizję i datę. Zapis wymaga pełnych ośmiu wpisów, więc dawny klient nie skasuje nowych metod. Zmiana nie wymaga migracji SQL. Uprawnienia autora, kontrola rewizji, edycja tylko we własnym trybie i kopia JSON pozostają w mocy.
+
+Treści rozdzielają raportowanie DAC7 (co najmniej 30 transakcji lub ponad 2000 EUR rocznie na platformie), prywatne zbycie rzeczy, działalność nierejestrowaną w Polsce (limit przychodu należnego 10 813,50 zł kwartalnie w 2026 r.) i KYC dostawcy płatności. Dashboard nie jest rozliczeniem podatkowym. Zasady platformy są oddzielne od ustaw podatkowych: standardowe konto nie dopuszcza rzeczy pozyskanych do komercyjnej odsprzedaży. Tematy moderacji opisują zgodność, dowody i odwołania, bez zapewnień pominięcia kontroli lub bezwarunkowego utworzenia konta po blokadzie. Metody autora pozostają puste do uzupełnienia.
 
 ## Wygląd i logo — 19 października 2026
 

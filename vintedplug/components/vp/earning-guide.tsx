@@ -2,10 +2,9 @@
 import {useRef,useState} from "react";
 import {ArrowLeft,ArrowRight,ArrowUpRight,BookOpen,Check,ChevronRight,ExternalLink,FileText,Lightbulb,LoaderCircle,Pencil} from "lucide-react";
 import {toast} from "sonner";
-import {EARNING_CHAPTERS,earningGuideInput,initialGuideChapters,type ChapterId,type EarningGuide,type GuideChapter} from "@/lib/earning-guide";
+import {EARNING_CHAPTERS,ALL_GUIDE_CHAPTERS,earningGuideInput,initialGuideChapters,type ChapterId,type GuideEntryId,type EarningGuide,type GuideInput} from "@/lib/earning-guide";
 import {Modal,errorMessage} from "./forms";
 
-type GuideInput={revision:number;chapters:GuideChapter[]};
 export type EarningGuideProps={guide:EarningGuide|null;canEdit:boolean;demo:boolean;enableOwn:()=>void;onSave:(input:GuideInput)=>Promise<void>};
 
 export function EarningGuideCard({onOpen}:{onOpen:()=>void}){
@@ -18,7 +17,7 @@ export function EarningGuideCard({onOpen}:{onOpen:()=>void}){
 export function EarningGuideReader({guide,canEdit,demo,enableOwn,onSave,onBack}:EarningGuideProps&{onBack:()=>void}){
  const [active,setActive]=useState<ChapterId>("setup"),[editing,setEditing]=useState<(GuideInput&{active:ChapterId})|null>(null);
  const articleRef=useRef<HTMLElement>(null),chapters=guide?.chapters??initialGuideChapters(),index=EARNING_CHAPTERS.findIndex(c=>c.id===active),definition=EARNING_CHAPTERS[index],chapter=chapters.find(c=>c.id===active)!;
- const filled=chapters.filter(c=>c.body.trim()).length;
+ const filled=EARNING_CHAPTERS.filter(c=>chapters.find(ch=>ch.id===c.id)?.body.trim()).length;
  function openChapter(id:ChapterId){setActive(id);requestAnimationFrame(()=>articleRef.current?.scrollIntoView({behavior:"smooth",block:"start"}));}
  function edit(){setEditing({active,revision:guide?.revision??0,chapters:chapters.map(c=>({...c}))});}
  return <div className="earning-reader">
@@ -36,12 +35,12 @@ export function EarningGuideReader({guide,canEdit,demo,enableOwn,onSave,onBack}:
     <div className="earning-pagination"><button className="btn secondary" disabled={index===0} onClick={()=>openChapter(EARNING_CHAPTERS[index-1].id)}><ArrowLeft size={14}/>Poprzedni</button><span>{index+1} / 6</span>{index<EARNING_CHAPTERS.length-1?<button className="btn primary" onClick={()=>openChapter(EARNING_CHAPTERS[index+1].id)}>Następny <ArrowRight size={14}/></button>:<button className="btn primary" onClick={onBack}>Baza wiedzy <BookOpen size={14}/></button>}</div>
    </article>
   </div>
-  {editing&&<ChapterEditor draft={editing} onSave={onSave} onClose={()=>setEditing(null)}/>}
+  {editing&&<GuideChapterEditor draft={editing} onSave={onSave} onClose={()=>setEditing(null)}/>}
  </div>;
 }
 
-function ChapterEditor({draft,onSave,onClose}:{draft:GuideInput&{active:ChapterId};onSave:EarningGuideProps["onSave"];onClose:()=>void}){
- const initial=draft.chapters.find(c=>c.id===draft.active)!,definition=EARNING_CHAPTERS.find(c=>c.id===draft.active)!;
+export function GuideChapterEditor({draft,onSave,onClose}:{draft:GuideInput&{active:GuideEntryId};onSave:EarningGuideProps["onSave"];onClose:()=>void}){
+ const initial=draft.chapters.find(c=>c.id===draft.active)!,definition=ALL_GUIDE_CHAPTERS.find(c=>c.id===draft.active)!;
  const [body,setBody]=useState(initial.body),[example,setExample]=useState(initial.example),[busy,setBusy]=useState(false);
  const dirty=body!==initial.body||example!==initial.example;
  function close(){if(!busy&&(!dirty||window.confirm("Masz niezapisane zmiany w rozdziale. Porzucić je?")))onClose();}

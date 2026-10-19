@@ -26,6 +26,8 @@ Po zapisaniu pliku serwer deweloperski odświeża zmiany. Przeglądarkę zostaw 
 | Formularze kont, rzeczy i wydatków | `components/vp/forms.tsx` |
 | Wygląd autorskiego poradnika i edytor | `components/vp/earning-guide.tsx` |
 | Rozdziały i materiał startowy poradnika | `lib/earning-guide.ts` |
+| Tematy, źródła i treści Bazy wiedzy | `lib/knowledge-base.ts` |
+| Karty, filtry, wyszukiwarka i czytnik Bazy wiedzy | `components/vp/knowledge-base.tsx` |
 | Obliczenia finansowe i walidacja | `lib/domain.ts` |
 | Nazwa strony i favicon | `app/layout.tsx` |
 | Logo oraz ikony | `public/brand/` |
@@ -33,7 +35,7 @@ Po zapisaniu pliku serwer deweloperski odświeża zmiany. Przeglądarkę zostaw 
 | Model bazy | `db/schema.ts` |
 | Kolejne zmiany struktury bazy | `drizzle/` |
 
-Treść poradnika możesz też edytować bez kodowania w panelu: **Baza wiedzy → Zarabianie → Otwórz poradnik → Edytuj rozdział**. Po zapisaniu własnej wersji to ona będzie pokazywana zamiast materiału startowego z pliku.
+Treść poradnika możesz też edytować bez kodowania w panelu: **Baza wiedzy → Pełny poradnik zarabiania → Otwórz poradnik → Edytuj rozdział**. W trzech tematach metod autora użyj przycisku **Dodaj swoją metodę** lub **Edytuj treść**. Najpierw włącz własny panel. Metoda pozyskiwania towaru i rozdział wyszukiwania w poradniku korzystają z tego samego zapisu. Po zapisaniu własnej wersji to ona będzie pokazywana zamiast materiału startowego z pliku.
 
 ## Te same czynności z terminala VS Code
 
