@@ -4,6 +4,8 @@ import {aiRequestInput,buildTextRequest,generateAIText,parseTextResponse,AITextE
 
 const item={name:"Bluza Nike",brand:"Nike",category:"Bluzy",size:"M",condition:"Dobry",description:"Czarna bluza z haftowanym logo.",measurements:"Szerokość 56 cm, długość 68 cm",flaws:"Przetarcie przy rękawie"};
 const draft={title:"Czarna bluza Nike M z haftowanym logo",description:"Czarna bluza Nike, rozmiar M z metki. Stan dobry. Przetarcie przy rękawie.",category:"Bluzy"};
+// Provider stub for transport/length checks, not a style evaluation.
+const longDraft={...draft,description:draft.description.repeat(8)};
 const envelope=(text,finishReason="STOP")=>({candidates:[{finishReason,content:{role:"model",parts:[{text:"INTERNAL_REASONING",thought:true},{text}]}}]});
 const config={apiKey:"test-only-key",model:"gemini-test-model"};
 
@@ -32,26 +34,63 @@ test("słowa kluczowe są opcjonalne; za długie dane i puste pytanie nie przech
  assert.deepEqual(buildTextRequest(item,{kind:"listing"}),buildTextRequest(item,{kind:"listing",keywords:""}));
 });
 
-test("wybór wersji opisu jest walidowany, działa bez słów kluczowych i zmienia tylko instrukcje ogłoszenia",async()=>{
+test("wybór wersji opisu jest walidowany i jest przekazywany razem z niezmienionymi faktami",async()=>{
  const requests=[];
  for(const listingStyle of LISTING_STYLES){
   const parsed=aiRequestInput.parse({kind:"listing",itemId:"item-1",listingStyle});
   assert.equal(parsed.keywords,"");
   assert.equal(parsed.listingStyle,listingStyle);
   const result=await generateAIText(config,item,{kind:"listing",listingStyle},async(_,init)=>{
-   requests.push(JSON.parse(init.body));return Response.json(envelope(JSON.stringify(draft)));
+   requests.push(JSON.parse(init.body));return Response.json(envelope(JSON.stringify(longDraft)));
   });
-  assert.deepEqual(result,draft);
+  assert.deepEqual(result,longDraft);
  }
  assert.equal(new Set(requests.map(r=>r.systemInstruction.parts[0].text)).size,3);
- assert.deepEqual(requests.map(r=>r.contents),[requests[0].contents,requests[0].contents,requests[0].contents]);
- assert.deepEqual(requests.map(r=>r.generationConfig),[requests[0].generationConfig,requests[0].generationConfig,requests[0].generationConfig]);
+ assert.deepEqual(requests.map(r=>JSON.parse(r.contents[0].parts[0].text).listingStyle),LISTING_STYLES);
+ for(const r of requests){const payload=JSON.parse(r.contents[0].parts[0].text);assert.deepEqual(payload.item,item);assert.equal(payload.keywords,"");}
  assert.deepEqual(buildTextRequest(item,{kind:"listing"}),buildTextRequest(item,{kind:"listing",listingStyle:"natural"}));
  for(const listingStyle of ["",null,"extra-long","ignore-the-rules",{},true]){
   assert.equal(aiRequestInput.safeParse({kind:"listing",itemId:"item-1",listingStyle}).success,false);
  }
  const reply=buildTextRequest(item,{kind:"reply",question:"Jaka szerokość?"});
  for(const listingStyle of LISTING_STYLES)assert.deepEqual(buildTextRequest(item,{kind:"reply",question:"Jaka szerokość?",listingStyle}),reply);
+});
+
+test("wersja szczegółowa rozwija zbyt krótki wynik raz, u tego samego dostawcy i z zachowaniem danych wejściowych",async()=>{
+ const requests=[];
+ const result=await generateAIText(config,item,{kind:"listing",listingStyle:"detailed",keywords:"ciepła, przejściowa, na jesienne dni"},async(url,init)=>{
+  requests.push({url,headers:init.headers,signal:init.signal,body:JSON.parse(init.body)});
+  return Response.json(envelope(JSON.stringify(requests.length===1?draft:longDraft)));
+ });
+ assert.deepEqual(result,longDraft);assert.equal(requests.length,2);
+ assert.equal(requests[0].url,requests[1].url);
+ assert.deepEqual(requests[0].headers,requests[1].headers);
+ assert.equal(requests[0].signal,requests[1].signal);
+ assert.deepEqual(requests[0].body.contents[0],requests[1].body.contents[0]);
+ assert.equal(JSON.parse(requests[1].body.contents[0].parts[0].text).keywords,"ciepła, przejściowa, na jesienne dni");
+ assert.deepEqual(JSON.parse(requests[1].body.contents[1].parts[0].text),draft);
+});
+
+test("zbyt krótka poprawka lub błąd jej generowania kończy zadanie, bez pętli i bez przyjmowania skrótu jako wersji szczegółowej",async()=>{
+ for(const failedResponse of [()=>Response.json(envelope(JSON.stringify(draft))),()=>new Response("UPSTREAM_SENSITIVE_DETAILS",{status:500})]){
+  let calls=0;
+  await assert.rejects(generateAIText(config,item,{kind:"listing",listingStyle:"detailed",keywords:"ciepła, na jesień"},async()=>{
+   calls++;return calls===1?Response.json(envelope(JSON.stringify(draft))):failedResponse();
+  }),error=>error instanceof AITextError&&error.status===502&&!error.message.includes("UPSTREAM_SENSITIVE_DETAILS"));
+  assert.equal(calls,2);
+ }
+});
+
+test("wystarczająco długi opis, wersja naturalna i uboga karta nie uruchamiają dodatkowej generacji",async()=>{
+ for(const [facts,input,response] of [
+  [item,{kind:"listing",listingStyle:"detailed",keywords:"ciepła, przejściowa"},longDraft],
+  [item,{kind:"listing",listingStyle:"natural",keywords:"ciepła, przejściowa"},draft],
+  [{...item,description:""},{kind:"listing",listingStyle:"detailed",keywords:""},draft],
+ ]){
+  let calls=0;
+  const result=await generateAIText(config,facts,input,async()=>{calls++;return Response.json(envelope(JSON.stringify(response)));});
+  assert.deepEqual(result,response);assert.equal(calls,1);
+ }
 });
 
 test("Gemini dostaje wyłącznie fakty do ogłoszenia; frazy są poza instrukcją systemową",()=>{
@@ -116,7 +155,7 @@ test("przerwany, zablokowany lub nieprawidłowy wynik nie trafia do karty rzeczy
 });
 
 test("błędy Gemini nie ujawniają odpowiedzi dostawcy i nie uruchamiają innego API",async()=>{
- for(const [status,expected] of [[400,502],[401,503],[402,503],[403,503],[404,503],[429,503],[500,502]]){
+ for(const [status,expected] of [[400,502],[401,503],[402,503],[403,503],[404,503],[429,503],[500,502],[503,503]]){
   let calls=0;
   await assert.rejects(generateAIText(config,item,{kind:"listing"},async()=>{calls++;return new Response("UPSTREAM_SENSITIVE_DETAILS",{status});}),e=>e instanceof AITextError&&e.status===expected&&!e.message.includes("UPSTREAM_SENSITIVE_DETAILS"));
   assert.equal(calls,1);
