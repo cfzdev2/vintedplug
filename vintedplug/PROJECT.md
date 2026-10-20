@@ -56,6 +56,10 @@ Serwer sprawdza w szczegółowej wersji minimum 100 słów bez hasztagów oraz o
 
 W wygenerowanym opisie poprawiana jest pisownia dwóch nazw wymiarów: „szerokosc” → „szerokość” i „dlugosc” → „długość”, z zachowaniem wielkości liter. Liczby, jednostki, przybliżenia i zapisane dane karty nie są przez tę korektę zmieniane. Testy sprawdzają te przypadki oraz rozdzielenie krótkiej/naturalnej wersji od wymagań długiej wersji, liczenie tekstu niezależnie od hashtagów i jednorazową poprawkę niepełnej generacji. Pozostają testy walidacji, autoryzowanego transportu klucza, błędów dostawcy, oddzielenia odpowiedzi kupującemu i danych finansowych. Przeciążenie Gemini (HTTP 503) ma osobny komunikat, a wcześniejszy wynik nie jest prezentowany jako nowy po błędzie.
 
+## Zwykły język prywatnego sprzedawcy — 20 października 2026
+
+Instrukcje wszystkich wersji ogłoszeń wymagają głosu jednej osoby: początek „Sprzedaję…”, „Mam na sprzedaż…” albo nazwa rzeczy. Nie stosuje się form sklepowych „przedstawiamy”, „oferujemy”, „nasza oferta”, katalogowych pochwał ani wymyślonej historii noszenia lub powodu sprzedaży. Wzorzec szczegółowy pokazuje prosty język, a prośba o korektę również przypomina o tym stylu. Szczegółowa zachowuje 130–190 słów, minimum 100 słów bez tagów i 8–12 hasztagów. To zmiana instrukcji i przykładu, bez dodatkowych wywołań modelu lub mechanicznego przepisywania wyniku. Ocena brzmienia wymaga ponownej generacji rzeczywistego ogłoszenia.
+
 ## Autorski poradnik — 19 października 2026
 
 Baza wiedzy zawiera osobny poradnik „Zarabianie na Vinted”. Sześć rozdziałów: ustawienie wyszukiwania, personalizacja polecanych ofert, własna metoda, ocena okazji, przygotowanie sprzedaży i przykłady. Materiał startowy odwołuje się do oficjalnych opisów Vinted (`/help/35`, `/help/409`, sprawdzone 19.10.2026). Metoda autora i wyniki pozostają puste do uzupełnienia; treści nie obiecują konkretnych efektów personalizacji.
