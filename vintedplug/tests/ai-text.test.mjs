@@ -4,8 +4,6 @@ import {aiRequestInput,buildTextRequest,generateAIText,parseTextResponse,AITextE
 
 const item={name:"Bluza Nike",brand:"Nike",category:"Bluzy",size:"M",condition:"Dobry",description:"Czarna bluza z haftowanym logo.",measurements:"Szerokość 56 cm, długość 68 cm",flaws:"Przetarcie przy rękawie"};
 const draft={title:"Czarna bluza Nike M z haftowanym logo",description:"Czarna bluza Nike, rozmiar M z metki. Stan dobry. Przetarcie przy rękawie.",category:"Bluzy"};
-// Provider stub for transport/length checks, not a style evaluation.
-const longDraft={...draft,description:draft.description.repeat(8)};
 const envelope=(text,finishReason="STOP")=>({candidates:[{finishReason,content:{role:"model",parts:[{text:"INTERNAL_REASONING",thought:true},{text}]}}]});
 const config={apiKey:"test-only-key",model:"gemini-test-model"};
 
@@ -41,9 +39,9 @@ test("wybór wersji opisu jest walidowany i jest przekazywany razem z niezmienio
   assert.equal(parsed.keywords,"");
   assert.equal(parsed.listingStyle,listingStyle);
   const result=await generateAIText(config,item,{kind:"listing",listingStyle},async(_,init)=>{
-   requests.push(JSON.parse(init.body));return Response.json(envelope(JSON.stringify(longDraft)));
+   requests.push(JSON.parse(init.body));return Response.json(envelope(JSON.stringify(draft)));
   });
-  assert.deepEqual(result,longDraft);
+  assert.deepEqual(result,draft);
  }
  assert.equal(new Set(requests.map(r=>r.systemInstruction.parts[0].text)).size,3);
  assert.deepEqual(requests.map(r=>JSON.parse(r.contents[0].parts[0].text).listingStyle),LISTING_STYLES);
@@ -56,41 +54,21 @@ test("wybór wersji opisu jest walidowany i jest przekazywany razem z niezmienio
  for(const listingStyle of LISTING_STYLES)assert.deepEqual(buildTextRequest(item,{kind:"reply",question:"Jaka szerokość?",listingStyle}),reply);
 });
 
-test("wersja szczegółowa rozwija zbyt krótki wynik raz, u tego samego dostawcy i z zachowaniem danych wejściowych",async()=>{
- const requests=[];
- const result=await generateAIText(config,item,{kind:"listing",listingStyle:"detailed",keywords:"ciepła, przejściowa, na jesienne dni"},async(url,init)=>{
-  requests.push({url,headers:init.headers,signal:init.signal,body:JSON.parse(init.body)});
-  return Response.json(envelope(JSON.stringify(requests.length===1?draft:longDraft)));
- });
- assert.deepEqual(result,longDraft);assert.equal(requests.length,2);
- assert.equal(requests[0].url,requests[1].url);
- assert.deepEqual(requests[0].headers,requests[1].headers);
- assert.equal(requests[0].signal,requests[1].signal);
- assert.deepEqual(requests[0].body.contents[0],requests[1].body.contents[0]);
- assert.equal(JSON.parse(requests[1].body.contents[0].parts[0].text).keywords,"ciepła, przejściowa, na jesienne dni");
- assert.deepEqual(JSON.parse(requests[1].body.contents[1].parts[0].text),draft);
-});
-
-test("zbyt krótka poprawka lub błąd jej generowania kończy zadanie, bez pętli i bez przyjmowania skrótu jako wersji szczegółowej",async()=>{
- for(const failedResponse of [()=>Response.json(envelope(JSON.stringify(draft))),()=>new Response("UPSTREAM_SENSITIVE_DETAILS",{status:500})]){
+test("krótki konkretny opis jest przyjmowany we wszystkich wersjach bez generowania zapychaczy",async()=>{
+ for(const listingStyle of LISTING_STYLES){
   let calls=0;
-  await assert.rejects(generateAIText(config,item,{kind:"listing",listingStyle:"detailed",keywords:"ciepła, na jesień"},async()=>{
-   calls++;return calls===1?Response.json(envelope(JSON.stringify(draft))):failedResponse();
-  }),error=>error instanceof AITextError&&error.status===502&&!error.message.includes("UPSTREAM_SENSITIVE_DETAILS"));
-  assert.equal(calls,2);
+  const result=await generateAIText(config,item,{kind:"listing",listingStyle,keywords:"ciepła, przejściowa, na jesienne dni"},async()=>{
+   calls++;return Response.json(envelope(JSON.stringify(draft)));
+  });
+  assert.deepEqual(result,draft);assert.equal(calls,1);
  }
 });
 
-test("wystarczająco długi opis, wersja naturalna i uboga karta nie uruchamiają dodatkowej generacji",async()=>{
- for(const [facts,input,response] of [
-  [item,{kind:"listing",listingStyle:"detailed",keywords:"ciepła, przejściowa"},longDraft],
-  [item,{kind:"listing",listingStyle:"natural",keywords:"ciepła, przejściowa"},draft],
-  [{...item,description:""},{kind:"listing",listingStyle:"detailed",keywords:""},draft],
- ]){
-  let calls=0;
-  const result=await generateAIText(config,facts,input,async()=>{calls++;return Response.json(envelope(JSON.stringify(response)));});
-  assert.deepEqual(result,response);assert.equal(calls,1);
- }
+test("poprawienie pisowni nazw wymiarów zachowuje wartości, jednostki, przybliżenia i pozostałą treść",()=>{
+ const description="Stan dobry. Przetarcie przy rękawie.\nWymiary:\n• szerokosc: ok. 51,5 cm\n• Dlugosc: 71–72 cm\n• DLUGOSC rękawa: 0.65 m\nObwód: 102 cm";
+ const result=parseTextResponse(envelope(JSON.stringify({...draft,description})),"listing",item.category);
+ assert.equal(result.description,"Stan dobry. Przetarcie przy rękawie.\nWymiary:\n• szerokość: ok. 51,5 cm\n• Długość: 71–72 cm\n• DŁUGOŚĆ rękawa: 0.65 m\nObwód: 102 cm");
+ assert.equal(result.title,draft.title);
 });
 
 test("Gemini dostaje wyłącznie fakty do ogłoszenia; frazy są poza instrukcją systemową",()=>{

@@ -32,30 +32,25 @@ export type ListingDraft=z.infer<typeof listingDraftInput>;
 export type TextKind="listing"|"reply";
 type ListingFacts=Pick<Item,"name"|"brand"|"category"|"size"|"condition"|"description"|"measurements"|"flaws">;
 type TextInput={kind:TextKind;keywords?:string;question?:string;listingStyle?:ListingStyle};
-export function listingDescriptionMinimum(item:ListingFacts,input:TextInput){
- const contextLength=item.description.trim().length+(input.keywords?.trim().length??0);
- return input.kind==="listing"&&input.listingStyle==="detailed"&&contextLength>=20?500:0;
-}
-
 const listingStyleInstructions:Record<ListingStyle,string>={
- natural:"WERSJA NATURALNA: dopracowane, swobodne ogłoszenie prywatnego sprzedawcy. Celuj w około 350–700 znaków i 3–4 czytelne bloki, jeśli liczba faktów na to pozwala. Połącz szczegóły w płynne zdania, zamiast tylko przepisać pola karty.",
- short:"WERSJA KRÓTKA: zwięzłe ogłoszenie, zwykle około 160–350 znaków. Krótkie wprowadzenie i najważniejsze dane, bez rozbudowanego zakończenia. Zachowaj wszystkie podane wady i wymiary, nawet gdy przez to opis będzie dłuższy.",
- detailed:"WERSJA SZCZEGÓŁOWA: napisz około 550–900 znaków, zwykle 3 akapity rozwijające rzecz oraz osobny blok rozmiaru, stanu i wymiarów. Rozwiń każdą zgodną cechę z karty ORAZ z dodatkowych cech i słów kluczowych sprzedawcy. Jeśli podano sezon lub zastosowanie, poświęć im pełny akapit. Dopiero gdy oba źródła zawierają wyłącznie nazwę, markę i rozmiar, dopuszczalny jest krótszy tekst. Nie powtarzaj tych samych faktów innymi słowami.",
+ natural:"WERSJA NATURALNA: swobodne, konkretne ogłoszenie prywatnego sprzedawcy. Połącz podane cechy w płynne zdania, a rozmiar, stan i wymiary pokaż czytelnie. Długość dopasuj do ilości informacji; nie ma docelowej ani minimalnej liczby znaków.",
+ short:"WERSJA KRÓTKA: krótkie przedstawienie rzeczy i najważniejsze informacje, bez zakończenia reklamowego. Zachowaj wszystkie podane wady i wymiary. Nie dąż do określonej liczby znaków.",
+ detailed:"WERSJA SZCZEGÓŁOWA: uwzględnij wszystkie zgodne, podane szczegóły rzeczy: np. materiał, kolor, fason, zapięcie, kaptur, kieszenie, wykończenie, sezon i stan. Grupuj je w krótkie zdania lub czytelne bloki, bez powtarzania. Wymień wyłącznie cechy z karty lub dodatkowych cech sprzedawcy. Gdy jest ich mało, opis ma być krótki także w tej wersji. Nie ma minimum znaków, docelowej długości ani wymaganej liczby akapitów.",
 };
 const listingWritingInstructions=[
  "Przygotuj gotowe ogłoszenie do serwisu z rzeczami używanymi: tytuł do 140 znaków i opis do 5000 znaków. Pisz jak konkretny, pomocny sprzedawca, swobodnie i poprawnie po polsku, bez tonu katalogu reklamowego.",
  "TYTUŁ: ułóż wyszukiwalną, naturalną frazę z marki, rodzaju rzeczy, koloru, rozmiaru i 1–2 wyróżniających detali, wyłącznie gdy są podane. Popraw literówki i kolejność słów. Nie dodawaj ciągu synonimów ani powtórzeń marki.",
  "OPIS: zacznij od 1–2 płynnych zdań przedstawiających rzecz i jej konkretne, zapisane cechy. Potem podaj rozmiar z metki, stan i zapisane wady. Wymiary wypisz w oddzielnym bloku, każdy w nowej linii. Przy bogatszej karcie pogrupuj pozostałe detale tak, aby tekst łatwo się czytało. Nie powtarzaj pełnego tytułu jako osobnego akapitu.",
- "W wersji naturalnej lub szczegółowej możesz dodać jedno krótkie zdanie z propozycją zestawienia ubrania, jeśli pasuje do rodzaju rzeczy. Najpierw rozwiń podane cechy i zastosowanie: wzmianka o jeansach nie zastępuje opisu sezonu, ciepła lub innych informacji przekazanych przez sprzedawcę. Nie dopisuj parametrów ani cech, których nie podano w żadnym źródle.",
- "Nazwy wymiarów, liczby, jednostki i oznaczenia przybliżenia zachowaj dokładnie. Nie zmieniaj zwykłej szerokości w obwód lub szerokość pod pachami; nie dopisuj sposobu mierzenia, jeśli go nie podano. Zachowaj wszystkie podane wady również w krótkiej wersji.",
+ "Nie dodawaj porad stylizacyjnych, akapitów o jeansach, T-shirtach i sneakersach, sugestii dopasowania do garderoby ani porad porównania wymiarów. Nie dopisuj cech «prosty fason», «uniwersalny krój», «wygodna» czy «łatwo dopasować», jeśli sprzedawca ich nie podał. Każde zdanie ma przekazywać konkretną informację o tej rzeczy. Także gdy wcześniejszy opis w karcie zawiera marketingowe zapychacze, pomiń je w nowym tekście.",
+ "Nazwy wymiarów zapisuj poprawnie po polsku: «szerokosc» to «szerokość», «dlugosc» to «długość». Zachowaj dokładnie liczby, jednostki i oznaczenia przybliżenia oraz znaczenie wymiaru. Nie zmieniaj zwykłej szerokości w obwód lub szerokość pod pachami; nie dopisuj sposobu mierzenia, jeśli go nie podano. Zachowaj wszystkie podane wady również w krótkiej wersji.",
  "Określenie stanu, np. «bardzo dobry», samo w sobie NIE potwierdza «bez wad», «bez śladów użytkowania», «jak nowa», «mało noszona» ani «bez plam i dziur». Takie stwierdzenia muszą być wprost zapisane w karcie lub w dodatkowych cechach i nie mogą przeczyć zapisanym wadom. Nie wnioskuj ich ze zdjęcia: nie otrzymujesz zdjęcia przedmiotu.",
  "POMIJAJ puste slogany i automatyczne zakończenia typu «Zapraszam do zakupu», «idealna do każdej stylizacji», «must have», «perełka», «świetna jakość» oraz deklaracje «szybka wysyłka» i «cena do negocjacji», których nie ma w karcie. Nie pisz urzędowo «oferuję przedmiot» ani «stan przedmiotu jest». Nie dodawaj emoji, Markdown ani list hasztagów; dopuszczalne są proste wypunktowania wymiarów.",
  "Wersje mają różnić się rozwinięciem treści. Gdy karta i dodatkowe cechy razem mają mało danych, napisz krótszy konkretny tekst. Nie wymyślaj zalet, cech lub wad i nie rozwlekaj opisu powtórzeniami. Nie wstawiaj w ogłoszeniu pustych nagłówków ani próśb o uzupełnienie brakujących pól.",
  "Zachowaj kategorię z karty. Zwróć wyłącznie JSON zgodny ze schematem.",
 ].join("\n");
 const listingExamples=[
- {facts:{name:"Granatowa kurtka bomberka",brand:"Wrangler",size:"L",condition:"Bardzo dobry",description:"",measurements:"Szerokość: 58 cm\nDługość: 69 cm",flaws:""},keywords:"na jesienne dni, przejściowa, ciepła",listingStyle:"detailed",draft:{title:"Wrangler granatowa ciepła kurtka bomberka L przejściowa",description:"Granatowa bomberka Wrangler w rozmiarze L z metki. Ciepła kurtka przejściowa na jesienne dni — dodatkowa warstwa, gdy na samą bluzę robi się już zbyt chłodno.\n\nDo codziennego zestawu możesz połączyć ją z prostymi jeansami i bluzą albo T-shirtem, zależnie od pogody. To propozycja dla osób szukających bomberki do swojej jesiennej garderoby.\n\nStan: bardzo dobry. Przed zakupem porównaj poniższe wymiary z kurtką, którą już nosisz — pozwoli Ci to ocenić dopasowanie niezależnie od oznaczenia L na metce.\n\nWymiary:\n• Szerokość: 58 cm\n• Długość: 69 cm"}},
- {facts:{name:"Zielona koszula sztruksowa",brand:"Uniqlo",size:"M",condition:"Dobry",description:"100% bawełny, zapinana na guziki, kieszeń na piersi.",measurements:"Szerokość: 54 cm\nDługość: 74 cm",flaws:"Małe przetarcie przy lewym mankiecie."},draft:{title:"Uniqlo zielona koszula sztruksowa M 100% bawełna",description:"Zielona koszula sztruksowa Uniqlo ze 100% bawełny. Zapinana na guziki, z kieszenią na piersi. Możesz połączyć ją z prostymi jeansami albo założyć rozpiętą na T-shirt.\n\nRozmiar z metki: M. Porównaj poniższe wymiary ze swoją koszulą, żeby ocenić dopasowanie.\n\nStan: dobry. Przy lewym mankiecie jest małe przetarcie.\n\nWymiary:\n• Szerokość: 54 cm\n• Długość: 74 cm"}},
+ {facts:{name:"Granatowa kurtka bomberka",brand:"Wrangler",size:"L",condition:"Bardzo dobry",description:"",measurements:"szerokosc: 58 cm\ndlugosc: 69 cm",flaws:""},keywords:"na jesienne dni, przejściowa, ciepła",listingStyle:"detailed",draft:{title:"Wrangler granatowa ciepła kurtka bomberka L przejściowa",description:"Granatowa bomberka Wrangler — ciepła kurtka przejściowa na jesienne dni.\n\nRozmiar z metki: L.\nStan: bardzo dobry.\n\nWymiary:\n• szerokość: 58 cm\n• długość: 69 cm"}},
+ {facts:{name:"Zielona koszula sztruksowa",brand:"Uniqlo",size:"M",condition:"Dobry",description:"100% bawełny, zapinana na guziki, kieszeń na piersi.",measurements:"Szerokość: 54 cm\nDługość: 74 cm",flaws:"Małe przetarcie przy lewym mankiecie."},listingStyle:"detailed",draft:{title:"Uniqlo zielona koszula sztruksowa M 100% bawełna",description:"Zielona koszula sztruksowa Uniqlo ze 100% bawełny. Zapinana na guziki, z kieszenią na piersi.\n\nRozmiar z metki: M.\nStan: dobry. Przy lewym mankiecie jest małe przetarcie.\n\nWymiary:\n• Szerokość: 54 cm\n• Długość: 74 cm"}},
  {facts:{name:"Sweter H&M",brand:"H&M",size:"L",condition:"Dobry",description:"",measurements:"",flaws:""},draft:{title:"Sweter H&M L",description:"Sweter H&M w rozmiarze L z metki.\nStan: dobry."}},
 ];
 
@@ -86,7 +81,7 @@ export function buildTextRequest(item:ListingFacts,input:TextInput){
   contents:[{role:"user",parts:[{text:JSON.stringify(payload)}]}],
   generationConfig:{maxOutputTokens:2200,candidateCount:1,
    ...(input.kind==="listing"?{responseFormat:{text:{mimeType:"APPLICATION_JSON",schema:{
-    type:"object",properties:{title:{type:"string"},description:{type:"string",description:listingDescriptionMinimum(item,input)?"Pełny opis 550–900 znaków, co najmniej 500. Rozwiń dodatkowe cechy sprzedawcy, zachowaj stan, wady i wymiary.":"Gotowy opis w wybranej wersji, z zachowaniem podanych cech, wad i wymiarów."},category:{type:"string",enum:[category]}},required:["title","description","category"],additionalProperties:false,
+    type:"object",properties:{title:{type:"string"},description:{type:"string",description:"Konkretny opis z podanych cech, bez zapychaczy i minimalnej długości. Zachowaj stan, wady i wymiary."},category:{type:"string",enum:[category]}},required:["title","description","category"],additionalProperties:false,
    }}}}:{}),
   },
  };
@@ -100,6 +95,13 @@ const responseEnvelope=z.object({
  })).max(1).optional(),
 });
 const blockedFinishReasons=new Set(["SAFETY","RECITATION","BLOCKLIST","PROHIBITED_CONTENT","SPII","IMAGE_SAFETY","IMAGE_PROHIBITED_CONTENT"]);
+function correctMeasurementLabels(text:string){
+ const labels:Record<string,string>={szerokosc:"szerokość",dlugosc:"długość"};
+ return text.replace(/\b(szerokosc|dlugosc)\b/gi,word=>{
+  const label=labels[word.toLowerCase()];
+  return word===word.toUpperCase()?label.toUpperCase():word[0]===word[0].toUpperCase()?label[0].toUpperCase()+label.slice(1):label;
+ });
+}
 export function parseTextResponse(payload:unknown,kind:TextKind,category:string):ListingDraft|{text:string}{
  const checked=responseEnvelope.safeParse(payload);
  if(!checked.success)throw new AITextError(502,"Dostawca AI zwrócił nieprawidłową odpowiedź. Spróbuj ponownie.");
@@ -118,7 +120,7 @@ export function parseTextResponse(payload:unknown,kind:TextKind,category:string)
  try{parsed=JSON.parse(text);}catch{throw new AITextError(502,"Tytuł i opis wymagają ponownego wygenerowania.");}
  const draft=listingDraftInput.safeParse(parsed);
  if(!draft.success||draft.data.category!==category)throw new AITextError(502,"AI zwróciło nieprawidłowy tytuł, opis lub kategorię. Spróbuj ponownie.");
- return draft.data;
+ return {...draft.data,description:correctMeasurementLabels(draft.data.description)};
 }
 
 async function fetchTextPayload(config:TextAIConfig,request:ReturnType<typeof buildTextRequest>,fetcher:typeof fetch,signal:AbortSignal){
@@ -148,16 +150,5 @@ async function fetchTextPayload(config:TextAIConfig,request:ReturnType<typeof bu
 
 export async function generateAIText(config:TextAIConfig,item:ListingFacts,input:TextInput,fetcher:typeof fetch=fetch){
  const request=buildTextRequest(item,input),signal=AbortSignal.timeout(60000);
- const result=parseTextResponse(await fetchTextPayload(config,request,fetcher,signal),input.kind,item.category);
- const minimum=listingDescriptionMinimum(item,input);
- if(minimum&&"description" in result&&result.description.length<minimum){
-  const correction={...request,contents:[...request.contents,
-   {role:"model",parts:[{text:JSON.stringify(result)}]},
-   {role:"user",parts:[{text:`Poprzedni opis ma ${result.description.length} znaków i jest za krótki dla wybranej wersji szczegółowej. Przygotuj pełną nową wersję, co najmniej ${minimum} znaków, docelowo 550–900. Rozwiń zgodne cechy z pola keywords oraz zapisany opis: przedstaw rzecz, opisz podany sezon lub zastosowanie, zachowaj blok rozmiaru, stanu, wad i wymiarów. Możesz dodać krótką poradę dopasowania na podstawie podanych wymiarów. Nie powtarzaj zdań, nie dopisuj niepodanych cech, parametrów, wysyłki ani autentyczności. Zwróć wyłącznie pełny JSON zgodny ze schematem.`}]},
-  ]};
-  const revised=parseTextResponse(await fetchTextPayload(config,correction,fetcher,signal),"listing",item.category);
-  if(!("description" in revised)||revised.description.length<minimum)throw new AITextError(502,"AI nie przygotowało pełnej wersji szczegółowej. Dodaj więcej cech rzeczy lub wybierz wersję naturalną.");
-  return revised;
- }
- return result;
+ return parseTextResponse(await fetchTextPayload(config,request,fetcher,signal),input.kind,item.category);
 }
