@@ -1,9 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {aiRequestInput,buildTextRequest,generateAIText,parseTextResponse,AITextError,textAIConfig,DEFAULT_GEMINI_TEXT_MODEL,LISTING_STYLES} from "../lib/ai-text.ts";
+import {aiRequestInput,buildTextRequest,generateAIText,parseTextResponse,AITextError,textAIConfig,DEFAULT_GEMINI_TEXT_MODEL,LISTING_STYLES,detailedListingComplete} from "../lib/ai-text.ts";
 
 const item={name:"Bluza Nike",brand:"Nike",category:"Bluzy",size:"M",condition:"Dobry",description:"Czarna bluza z haftowanym logo.",measurements:"Szerokość 56 cm, długość 68 cm",flaws:"Przetarcie przy rękawie"};
 const draft={title:"Czarna bluza Nike M z haftowanym logo",description:"Czarna bluza Nike, rozmiar M z metki. Stan dobry. Przetarcie przy rękawie.",category:"Bluzy"};
+const tags=["#Nike","#BluzaNike","#Bluza","#CzarnaBluza","#RozmiarM","#Casual","#Streetwear","#ModaCodzienna"];
+// Transport/validation stub; actual style is checked separately against Gemini.
+const detailedDraft={...draft,description:"Przykładowa treść opisu do testu walidacji. ".repeat(20)+"\n\n"+tags.join(" ")};
 const envelope=(text,finishReason="STOP")=>({candidates:[{finishReason,content:{role:"model",parts:[{text:"INTERNAL_REASONING",thought:true},{text}]}}]});
 const config={apiKey:"test-only-key",model:"gemini-test-model"};
 
@@ -39,9 +42,9 @@ test("wybór wersji opisu jest walidowany i jest przekazywany razem z niezmienio
   assert.equal(parsed.keywords,"");
   assert.equal(parsed.listingStyle,listingStyle);
   const result=await generateAIText(config,item,{kind:"listing",listingStyle},async(_,init)=>{
-   requests.push(JSON.parse(init.body));return Response.json(envelope(JSON.stringify(draft)));
+   requests.push(JSON.parse(init.body));return Response.json(envelope(JSON.stringify(listingStyle==="detailed"?detailedDraft:draft)));
   });
-  assert.deepEqual(result,draft);
+  assert.deepEqual(result,listingStyle==="detailed"?detailedDraft:draft);
  }
  assert.equal(new Set(requests.map(r=>r.systemInstruction.parts[0].text)).size,3);
  assert.deepEqual(requests.map(r=>JSON.parse(r.contents[0].parts[0].text).listingStyle),LISTING_STYLES);
@@ -54,14 +57,47 @@ test("wybór wersji opisu jest walidowany i jest przekazywany razem z niezmienio
  for(const listingStyle of LISTING_STYLES)assert.deepEqual(buildTextRequest(item,{kind:"reply",question:"Jaka szerokość?",listingStyle}),reply);
 });
 
-test("krótki konkretny opis jest przyjmowany we wszystkich wersjach bez generowania zapychaczy",async()=>{
- for(const listingStyle of LISTING_STYLES){
+test("krótka i naturalna wersja nie wymagają długiego tekstu ani hasztagów",async()=>{
+ for(const listingStyle of ["short","natural"]){
   let calls=0;
   const result=await generateAIText(config,item,{kind:"listing",listingStyle,keywords:"ciepła, przejściowa, na jesienne dni"},async()=>{
    calls++;return Response.json(envelope(JSON.stringify(draft)));
   });
   assert.deepEqual(result,draft);assert.equal(calls,1);
  }
+});
+
+test("długi opis wymaga tekstu niezależnie od hasztagów oraz 8–12 różnych tagów",()=>{
+ const body="Słowo ".repeat(100);
+ assert.equal(detailedListingComplete(body+tags.join(" ")),true);
+ assert.equal(detailedListingComplete("Słowo ".repeat(99)+tags.join(" ")),false);
+ assert.equal(detailedListingComplete(body),false);
+ assert.equal(detailedListingComplete(body+tags.slice(0,7).join(" ")),false);
+ assert.equal(detailedListingComplete(body+[...tags,"#nike"].join(" ")),false);
+ assert.equal(detailedListingComplete(body+[...tags,"#Jesien","#NaCoDzien","#Ubrania","#Styl","#InnyTag"].join(" ")),false);
+});
+
+test("szczegółowa wersja poprawia krótki wynik bez tagów raz, zachowując oryginalne dane",async()=>{
+ const requests=[];
+ const result=await generateAIText(config,item,{kind:"listing",listingStyle:"detailed",keywords:"ciepła, przejściowa"},async(url,init)=>{
+  requests.push({url,body:JSON.parse(init.body),signal:init.signal});
+  return Response.json(envelope(JSON.stringify(requests.length===1?draft:detailedDraft)));
+ });
+ assert.deepEqual(result,detailedDraft);assert.equal(requests.length,2);
+ assert.equal(requests[0].url,requests[1].url);assert.equal(requests[0].signal,requests[1].signal);
+ assert.deepEqual(requests[0].body.contents[0],requests[1].body.contents[0]);
+});
+
+test("gotowy długi opis nie jest generowany drugi raz",async()=>{
+ let calls=0;
+ const result=await generateAIText(config,item,{kind:"listing",listingStyle:"detailed"},async()=>{calls++;return Response.json(envelope(JSON.stringify(detailedDraft)));});
+ assert.deepEqual(result,detailedDraft);assert.equal(calls,1);
+});
+
+test("ponownie krótki opis nie jest przyjmowany jako szczegółowy i nie powoduje pętli",async()=>{
+ let calls=0;
+ await assert.rejects(generateAIText(config,item,{kind:"listing",listingStyle:"detailed"},async()=>{calls++;return Response.json(envelope(JSON.stringify(draft)));}),error=>error instanceof AITextError&&error.status===502);
+ assert.equal(calls,2);
 });
 
 test("poprawienie pisowni nazw wymiarów zachowuje wartości, jednostki, przybliżenia i pozostałą treść",()=>{
