@@ -3,7 +3,7 @@ import {useEffect,useMemo,useRef,useState} from "react";
 import {LayoutDashboard,Shirt,Wallet,ImagePlus,Sparkles,BookOpen,Settings,Users,Plus,Search,ChevronRight,ChevronDown,ArrowUpRight,ArrowRight,Download,MoreHorizontal,Package,TrendingUp,ArrowDownLeft,SlidersHorizontal,Menu,X,Check,Copy,MessageCircle,Calculator,Upload,LoaderCircle,ExternalLink,Pencil,Trash2,RefreshCw,LogOut,Info,CheckCircle2,Camera,Layers3} from "lucide-react";
 import {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip} from "recharts";
 import {Toaster,toast} from "sonner";
-import {type Workspace,type Item,type Account,type Expense,type Period,emptyWorkspace,STATUSES,metrics,formatMoney,itemCost,itemProfit,today,monthPeriod,parseMoney,inPeriod,descriptionTemplate,replyTemplate,accountInput,itemInput,expenseInput} from "@/lib/domain";
+import {type Workspace,type Item,type Account,type Expense,type Period,emptyWorkspace,STATUSES,metrics,formatMoney,itemCost,itemProfit,today,monthPeriod,parseMoney,inPeriod,descriptionTemplate,replyTemplate,accountInput,itemInput,expenseInput,itemStatusIssue} from "@/lib/domain";
 import {demoWorkspace} from "@/lib/demo";
 import {ProductArt} from "./product-art";
 import {KnowledgeBase} from "./knowledge-base";
@@ -55,7 +55,7 @@ export function Panel({initial,displayName,email,signOutHref}:{initial:Workspace
   if(!demo){const next=await api<Workspace>("/api/workspace",{method:"POST",body:JSON.stringify({action,data:raw})});if(action==="account.save"&&!raw.id){const a=next.accounts.find(a=>!real.accounts.some(old=>old.id===a.id));if(a)setSelected(a.id);}setReal(next);toast.success("Zapisano zmiany.");return;}
   const next={...demoData,accounts:[...demoData.accounts],items:[...demoData.items],expenses:[...demoData.expenses]},now=new Date().toISOString();
   if(action==="account.save"){const a=accountInput.parse(raw),id=a.id??`demo-${crypto.randomUUID()}`,v={...a,id,createdAt:now};next.accounts=a.id?next.accounts.map(old=>old.id===a.id?v:old):[...next.accounts,v];if(!a.id)setSelected(id);}
-  if(action==="item.save"){const i=itemInput.parse(raw),id=i.id??`demo-${crypto.randomUUID()}`,v={...i,id,revision:(i.revision??0)+1,createdAt:now,updatedAt:now} as Item;next.items=i.id?next.items.map(old=>old.id===i.id?v:old):[v,...next.items];}
+  if(action==="item.save"){const i=itemInput.parse(raw),old=i.id?next.items.find(old=>old.id===i.id):undefined;if(i.id&&!old)throw new Error("Nie znaleziono rzeczy.");const statusIssue=itemStatusIssue(i.status,old?.status);if(statusIssue)throw new Error(statusIssue);const id=i.id??`demo-${crypto.randomUUID()}`,v={...i,id,revision:(i.revision??0)+1,createdAt:old?.createdAt??now,updatedAt:now} as Item;next.items=i.id?next.items.map(old=>old.id===i.id?v:old):[v,...next.items];}
   if(action==="expense.save"){const e=expenseInput.parse(raw),v={...e,id:e.id??`demo-${crypto.randomUUID()}`,createdAt:now};next.expenses=e.id?next.expenses.map(old=>old.id===e.id?v:old):[v,...next.expenses];}
   if(action==="item.delete")next.items=next.items.filter(i=>i.id!==raw.id);
   if(action==="expense.delete")next.expenses=next.expenses.filter(e=>e.id!==raw.id);

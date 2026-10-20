@@ -2,6 +2,16 @@ import {z} from "zod";
 import type {EarningGuide} from "./earning-guide";
 export const STATUSES={draft:"Szkic",listed:"Wystawione",sold:"Sprzedane",returned:"Zwrot"} as const;
 export type Status=keyof typeof STATUSES;
+export function itemStatusOptions(previousStatus?:string):Status[]{
+ const options:Status[]=["draft","listed"];
+ if(previousStatus)options.push("sold");
+ if(previousStatus==="sold"||previousStatus==="returned")options.push("returned");
+ return options;
+}
+export function itemStatusIssue(status:Status,previousStatus?:string){
+ if(itemStatusOptions(previousStatus).includes(status))return null;
+ return previousStatus?"Zwrot możesz oznaczyć dopiero po zapisanej sprzedaży.":"Nową rzecz dodaj jako szkic lub wystawioną. Sprzedaż oznaczysz później w magazynie.";
+}
 const money=z.number().int().min(0).max(100_000_000);
 const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(s=>{const d=new Date(s+"T12:00:00Z");return !isNaN(d.getTime())&&d.toISOString().slice(0,10)===s;},"Nieprawidłowa data");
 export const accountInput=z.object({id:z.string().max(80).optional(),name:z.string().trim().min(1).max(60),handle:z.string().trim().max(80).default(""),color:z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#006676")});

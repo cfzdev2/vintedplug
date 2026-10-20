@@ -20,6 +20,8 @@ Koszt rzeczy = zakup + dodatkowy koszt rzeczy. Wynik w okresie = sprzedaże w ok
 
 Zwrot w tej wersji wycofuje daną sprzedaż ze zestawień i przywraca rzecz do zapasów. Nie jest osobnym przepływem finansowym z datą refundacji. Rozliczanie zwrotów w różnych okresach jest osobnym zadaniem dalszego rozwoju.
 
+Nową rzecz można dodać jako „Szkic” lub „Wystawione”. „Sprzedane” pojawia się przy edycji zapisanej rzeczy, a „Zwrot” dopiero przy rzeczy zapisanej jako sprzedana (lub już zwróconej, aby nadal dało się ją edytować). Po zwrocie można wrócić do szkicu, ponownie wystawić rzecz lub zapisać kolejną sprzedaż. Reguły są wspólne dla formularza, serwera i trybu demo. Przy sprzedaży i zwrocie sekcja szczegółów ogłoszenia jest ukryta, ale jej wartości pozostają w formularzu i nie giną przy zapisie ani przełączaniu statusu. Wymiary, wady i opis są opcjonalne.
+
 Edycja rzeczy ma kontrolę rewizji, aby wykrywać równoczesne zmiany w kilku oknach. Usunięcie konta wymaga wpisania jego nazwy i usuwa jego rzeczy oraz wydatki. Zdjęcia są prywatne, a format i rozmiar pliku sprawdzane po stronie serwera.
 
 ## AI
