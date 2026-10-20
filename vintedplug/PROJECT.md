@@ -44,6 +44,14 @@ Integrację tekstową przełączono z OpenAI na Gemini na polecenie właściciel
 
 Podstawa dokumentacji (19.10.2026): `https://ai.google.dev/api/generate-content`, `https://ai.google.dev/gemini-api/docs/generate-content/structured-output`, `https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite`, `https://ai.google.dev/gemini-api/docs/pricing`. Testy Gemini używają atrap; nie potwierdzają jakości tekstów ani limitów konkretnego konta. W konfiguracji hostingu na etapie tej zmiany brakowało `GEMINI_API_KEY`; bezpieczne dodanie sekretu i test rzeczywistego generowania pozostają wymagane przed oznaczeniem AI jako działającego. Klucza nie należy przekazywać w czacie ani repozytorium. Wcześniej utworzony lokalny klucz OpenAI został uwierzytelniony, ale próbę generowania zatrzymał brak salda (`credit_balance_exhausted`); nie jest wykorzystywany przez generator Gemini.
 
+## Rozbudowanie opisów — 20 października 2026
+
+Asystent ogłoszeń ma wybór wersji: naturalna (domyślna), krótka i szczegółowa. `listingStyle` jest walidowanym enumem API, przekazywanym przez trasę do generatora. Starsze żądania bez tego pola zachowują wersję naturalną. Wybór zmienia wyłącznie instrukcje ogłoszenia, nie fakty przedmiotu ani odpowiedzi kupującemu. Zmiana ustawienia zachowuje już wygenerowany i edytowany tekst do kolejnej generacji. Szablon nadal korzysta z zapisanych danych i nie jest generacją AI.
+
+Nowe instrukcje opisują wyszukiwalny tytuł, naturalne wprowadzenie, czytelne grupowanie detali oraz osobny blok wymiarów. Zawierają wzorzec pełniejszej karty i skąpej karty, z zakazem przenoszenia przykładowych faktów. Sugerowane długości zależą od wersji i nie są minimum: model ma skrócić tekst, kiedy brakuje danych. Zapisane wady i wymiary mają pozostać także w krótkiej wersji. Ocena „bardzo dobry” nie potwierdza braku wad, śladów noszenia ani oryginalności. Opis może zawierać pojedynczą sugestię stylizacji, bez dopisywania parametrów produktu. Panel wyjaśnia, że tekstowy generator nie analizuje miniatury zdjęcia; kolor, fason, materiał i detale trzeba wpisać w karcie.
+
+Testy sprawdzają walidację i przekazywanie wersji do żądania Gemini, zgodność domyślną i oddzielenie od odpowiedzi kupującemu. Używają atrap dostawcy, więc ocena stylu i poprawności nowych wyników wymaga wygenerowania ogłoszenia w działającym panelu.
+
 ## Autorski poradnik — 19 października 2026
 
 Baza wiedzy zawiera osobny poradnik „Zarabianie na Vinted”. Sześć rozdziałów: ustawienie wyszukiwania, personalizacja polecanych ofert, własna metoda, ocena okazji, przygotowanie sprzedaży i przykłady. Materiał startowy odwołuje się do oficjalnych opisów Vinted (`/help/35`, `/help/409`, sprawdzone 19.10.2026). Metoda autora i wyniki pozostają puste do uzupełnienia; treści nie obiecują konkretnych efektów personalizacji.

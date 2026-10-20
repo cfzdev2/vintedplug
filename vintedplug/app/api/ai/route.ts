@@ -17,6 +17,6 @@ export async function POST(req:Request){try{
    if(!res.ok)throw new HttpError(502,"Dostawca AI nie wykonał edycji. Spróbuj ponownie później.");const out=await res.json() as {data?:{b64_json?:string}[]};const encoded=out.data?.[0]?.b64_json;if(!encoded||encoded.length>22_000_000)throw new HttpError(502,"Nieprawidłowy wynik edycji.");
    return Response.json(await saveUpload(uid,Uint8Array.from(atob(encoded),c=>c.charCodeAt(0)),"image/webp"));
   }
-  return Response.json(await generateAIText(textConfig!,item,{kind:data.kind==="listing"?"listing":"reply",keywords:data.keywords,question:data.question}),{headers:{"Cache-Control":"no-store"}});
+  return Response.json(await generateAIText(textConfig!,item,{kind:data.kind==="listing"?"listing":"reply",keywords:data.keywords,question:data.question,listingStyle:data.listingStyle}),{headers:{"Cache-Control":"no-store"}});
  }catch(e){await refund();if(e instanceof AITextError)throw new HttpError(e.status,e.message);throw e;}
 }catch(e){return apiError(e);}}

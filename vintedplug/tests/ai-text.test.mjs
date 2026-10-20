@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {aiRequestInput,buildTextRequest,generateAIText,parseTextResponse,AITextError,textAIConfig,DEFAULT_GEMINI_TEXT_MODEL} from "../lib/ai-text.ts";
+import {aiRequestInput,buildTextRequest,generateAIText,parseTextResponse,AITextError,textAIConfig,DEFAULT_GEMINI_TEXT_MODEL,LISTING_STYLES} from "../lib/ai-text.ts";
 
 const item={name:"Bluza Nike",brand:"Nike",category:"Bluzy",size:"M",condition:"Dobry",description:"Czarna bluza z haftowanym logo.",measurements:"Szerokość 56 cm, długość 68 cm",flaws:"Przetarcie przy rękawie"};
 const draft={title:"Czarna bluza Nike M z haftowanym logo",description:"Czarna bluza Nike, rozmiar M z metki. Stan dobry. Przetarcie przy rękawie.",category:"Bluzy"};
@@ -21,6 +21,7 @@ test("Gemini wymaga własnego klucza i ma domyślny model; klucz OpenAI nie akty
 test("słowa kluczowe są opcjonalne; za długie dane i puste pytanie nie przechodzą walidacji",()=>{
  const base={kind:"listing",itemId:"item-1"};
  assert.equal(aiRequestInput.parse(base).keywords,"");
+ assert.equal(aiRequestInput.parse(base).listingStyle,"natural");
  assert.equal(aiRequestInput.parse({...base,keywords:"   "}).keywords,"");
  assert.equal(aiRequestInput.parse({...base,keywords:" streetwear, casual "}).keywords,"streetwear, casual");
  assert.equal(aiRequestInput.safeParse({...base,keywords:"x".repeat(501)}).success,false);
@@ -29,6 +30,28 @@ test("słowa kluczowe są opcjonalne; za długie dane i puste pytanie nie przech
  assert.equal(aiRequestInput.safeParse({kind:"reply",itemId:"item-1",question:" "}).success,false);
  assert.equal(aiRequestInput.safeParse({kind:"image",itemId:"item-1",style:"paper"}).success,true);
  assert.deepEqual(buildTextRequest(item,{kind:"listing"}),buildTextRequest(item,{kind:"listing",keywords:""}));
+});
+
+test("wybór wersji opisu jest walidowany, działa bez słów kluczowych i zmienia tylko instrukcje ogłoszenia",async()=>{
+ const requests=[];
+ for(const listingStyle of LISTING_STYLES){
+  const parsed=aiRequestInput.parse({kind:"listing",itemId:"item-1",listingStyle});
+  assert.equal(parsed.keywords,"");
+  assert.equal(parsed.listingStyle,listingStyle);
+  const result=await generateAIText(config,item,{kind:"listing",listingStyle},async(_,init)=>{
+   requests.push(JSON.parse(init.body));return Response.json(envelope(JSON.stringify(draft)));
+  });
+  assert.deepEqual(result,draft);
+ }
+ assert.equal(new Set(requests.map(r=>r.systemInstruction.parts[0].text)).size,3);
+ assert.deepEqual(requests.map(r=>r.contents),[requests[0].contents,requests[0].contents,requests[0].contents]);
+ assert.deepEqual(requests.map(r=>r.generationConfig),[requests[0].generationConfig,requests[0].generationConfig,requests[0].generationConfig]);
+ assert.deepEqual(buildTextRequest(item,{kind:"listing"}),buildTextRequest(item,{kind:"listing",listingStyle:"natural"}));
+ for(const listingStyle of ["",null,"extra-long","ignore-the-rules",{},true]){
+  assert.equal(aiRequestInput.safeParse({kind:"listing",itemId:"item-1",listingStyle}).success,false);
+ }
+ const reply=buildTextRequest(item,{kind:"reply",question:"Jaka szerokość?"});
+ for(const listingStyle of LISTING_STYLES)assert.deepEqual(buildTextRequest(item,{kind:"reply",question:"Jaka szerokość?",listingStyle}),reply);
 });
 
 test("Gemini dostaje wyłącznie fakty do ogłoszenia; frazy są poza instrukcją systemową",()=>{
