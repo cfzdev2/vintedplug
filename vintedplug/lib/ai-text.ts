@@ -11,15 +11,30 @@ export function textAIConfig(env:{GEMINI_API_KEY?:string;GEMINI_TEXT_MODEL?:stri
  if(!apiKey||!/^gemini-[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(model))return null;
  return {apiKey,model};
 }
+export const listingFactsInput=z.object({
+ name:z.string().trim().min(1,"Wpisz nazwę rzeczy, aby przygotować ogłoszenie.").max(140),
+ brand:z.string().trim().max(80).default(""),category:z.string().trim().min(1).max(80),
+ size:z.string().max(30).default(""),condition:z.string().max(50).default("Bardzo dobry"),
+ description:z.string().max(5000).default(""),measurements:z.string().max(1000).default(""),flaws:z.string().max(1000).default(""),
+}).strict();
 export const aiRequestInput=z.object({
  kind:z.enum(["listing","reply","image"]),
- itemId:z.string().trim().min(1).max(80),
+ itemId:z.string().trim().min(1).max(80).optional(),
+ accountId:z.string().trim().min(1).max(80).optional(),
+ draft:listingFactsInput.optional(),
  keywords:z.string().trim().max(KEYWORDS_MAX_LENGTH,"Słowa kluczowe mogą mieć maksymalnie 500 znaków.").default(""),
  listingStyle:z.enum(LISTING_STYLES).default("natural"),
  question:z.string().trim().max(3000).optional(),
  imageId:z.string().max(80).optional(),
  style:z.enum(["paper","stone","linen"]).optional(),
 }).strict().superRefine((v,c)=>{
+ if(v.kind==="listing"&&v.draft){
+  if(v.itemId)c.addIssue({code:z.ZodIssueCode.custom,message:"Wybierz dane formularza albo zapisaną rzecz.",path:["itemId"]});
+  if(!v.accountId)c.addIssue({code:z.ZodIssueCode.custom,message:"Wybierz konto sprzedażowe.",path:["accountId"]});
+ }else{
+  if(!v.itemId)c.addIssue({code:z.ZodIssueCode.custom,message:"Wybierz zapisaną rzecz.",path:["itemId"]});
+  if(v.draft||v.accountId)c.addIssue({code:z.ZodIssueCode.custom,message:"Dane formularza są dostępne tylko dla ogłoszenia.",path:["draft"]});
+ }
  if(v.kind==="reply"&&!v.question)c.addIssue({code:z.ZodIssueCode.custom,message:"Wpisz wiadomość kupującego.",path:["question"]});
 });
 
@@ -30,7 +45,7 @@ export const listingDraftInput=z.object({
 }).strict();
 export type ListingDraft=z.infer<typeof listingDraftInput>;
 export type TextKind="listing"|"reply";
-type ListingFacts=Pick<Item,"name"|"brand"|"category"|"size"|"condition"|"description"|"measurements"|"flaws">;
+export type ListingFacts=Pick<Item,"name"|"brand"|"category"|"size"|"condition"|"description"|"measurements"|"flaws">;
 type TextInput={kind:TextKind;keywords?:string;question?:string;listingStyle?:ListingStyle};
 const listingStyleInstructions:Record<ListingStyle,string>={
  natural:"WERSJA NATURALNA: swobodne, konkretne ogłoszenie prywatnego sprzedawcy. Połącz podane cechy w płynne zdania, a rozmiar, stan i wymiary pokaż czytelnie. Długość dopasuj do ilości informacji; nie ma docelowej ani minimalnej liczby znaków.",

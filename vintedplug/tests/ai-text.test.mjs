@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {setImmediate as nextTurn} from "node:timers/promises";
+import {resolveAIContext} from "../lib/ai-context.ts";
 import {aiRequestInput,buildTextRequest,generateAIText,parseTextResponse,AITextError,textAIConfig,DEFAULT_GEMINI_TEXT_MODEL,LISTING_STYLES,detailedListingComplete} from "../lib/ai-text.ts";
 
 const item={name:"Bluza Nike",brand:"Nike",category:"Bluzy",size:"M",condition:"Dobry",description:"Czarna bluza z haftowanym logo.",measurements:"Szerokość 56 cm, długość 68 cm",flaws:"Przetarcie przy rękawie"};
@@ -10,6 +11,45 @@ const tags=["#Nike","#BluzaNike","#Bluza","#CzarnaBluza","#RozmiarM","#Casual","
 const detailedDraft={...draft,description:"Przykładowa treść opisu do testu walidacji. ".repeat(20)+"\n\n"+tags.join(" ")};
 const envelope=(text,finishReason="STOP")=>({candidates:[{finishReason,content:{role:"model",parts:[{text:"INTERNAL_REASONING",thought:true},{text}]}}]});
 const config={apiKey:"test-only-key",model:"gemini-test-model"};
+
+test("ogłoszenie z formularza nie wymaga zapisu rzeczy ani słów kluczowych",async()=>{
+ const input=aiRequestInput.parse({kind:"listing",accountId:"own-account",draft:{...item,name:"Nowa nazwa wpisana w formularzu"}}),lookups=[];
+ const context=await resolveAIContext(input,{ownAccount:async id=>{lookups.push(id);return {};},ownItem:async()=>{throw new Error("Nie wolno czytać zapisanej rzeczy dla formularza");}});
+ assert.deepEqual(lookups,["own-account"]);assert.equal(context.item,null);assert.equal(input.keywords,"");
+ assert.equal(context.facts.name,"Nowa nazwa wpisana w formularzu");
+ let sent;
+ await generateAIText(config,context.facts,input,async(_,init)=>{sent=JSON.parse(init.body);return Response.json(envelope(JSON.stringify(draft)));});
+ const payload=JSON.parse(sent.contents[0].parts[0].text);
+ assert.equal(payload.item.name,context.facts.name);assert.equal(payload.keywords,"");assert.equal(JSON.stringify(sent).includes("own-account"),false);
+});
+
+test("niejednoznaczny, niepełny lub finansowy kontekst formularza jest odrzucany",()=>{
+ const base={kind:"listing",accountId:"own-account",draft:item};
+ for(const input of [{kind:"listing"},{...base,accountId:undefined},{...base,itemId:"saved-item"},{...base,kind:"reply",question:"Pytanie"},{...base,kind:"image"},{kind:"reply",question:"Pytanie"},{kind:"listing",itemId:"saved-item",accountId:"own-account"}])assert.equal(aiRequestInput.safeParse(input).success,false);
+ for(const extra of [{owner:"other-owner"},{purchasePrice:1000},{imageIds:["private-image"]}])assert.equal(aiRequestInput.safeParse({...base,draft:{...item,...extra}}).success,false);
+ assert.equal(aiRequestInput.safeParse({...base,draft:{...item,name:"   "}}).success,false);
+ assert.equal(aiRequestInput.safeParse({...base,draft:{...item,description:"x".repeat(5001)}}).success,false);
+});
+
+test("odmowa dostępu do konta przerywa generowanie formularza bez szukania innej rzeczy",async()=>{
+ const input=aiRequestInput.parse({kind:"listing",accountId:"foreign-account",draft:item});let itemReads=0,providerCalls=0;
+ const denied=new Error("Brak dostępu do konta");
+ await assert.rejects(async()=>{
+  const context=await resolveAIContext(input,{ownAccount:async()=>{throw denied;},ownItem:async()=>{itemReads++;return {...item,imageIds:[]};}});
+  await generateAIText(config,context.facts,input,async()=>{providerCalls++;return Response.json(envelope(JSON.stringify(draft)));});
+ },e=>e===denied);
+ assert.equal(itemReads,0);assert.equal(providerCalls,0);
+});
+
+test("Asystent, odpowiedzi i zdjęcia nadal wymagają dostępu do zapisanej rzeczy",async()=>{
+ const stored={...item,imageIds:["owned-image"]};
+ for(const kind of ["listing","reply","image"]){
+  const input=aiRequestInput.parse({kind,itemId:"owned-item",...(kind==="reply"?{question:"Pytanie"}:{})}),ids=[];
+  const context=await resolveAIContext(input,{ownItem:async id=>{ids.push(id);return stored;},ownAccount:async()=>{throw new Error("Nieoczekiwane konto");}});
+  assert.deepEqual(ids,["owned-item"]);assert.equal(context.item,stored);assert.equal(context.facts,stored);
+  await assert.rejects(resolveAIContext(input,{ownItem:async()=>{throw new Error("Brak dostępu do rzeczy");},ownAccount:async()=>({})}),/Brak dostępu do rzeczy/);
+ }
+});
 
 test("Gemini wymaga własnego klucza i ma domyślny model; klucz OpenAI nie aktywuje tekstów",()=>{
  assert.equal(textAIConfig({}),null);

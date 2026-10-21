@@ -41,6 +41,40 @@
 
 .item-listing-details{display:flex;flex-direction:column;gap:17px}.item-listing-details[hidden]{display:none}.assistant-result-note{margin:0 22px 20px}@media(max-width:480px){.item-listing-details{gap:15px}}
 
+/* Listing preparation inside the item card. */
+.listing-copy-field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.listing-copy-field>.text-button{align-self:flex-end;font-size:11px}
+.listing-copy-field textarea{line-height:1.85;resize:vertical;min-height:170px}
+.listing-checklist{margin-top:22px;border:1px solid #dcecf1;border-radius:9px;background:#f7fbfc;padding:15px 13px}
+.listing-checklist h3{font-size:12px;font-weight:600;color:#173e4b;margin-bottom:7px}
+.listing-checklist>p{font-size:10px;line-height:1.8;color:#607985;margin:6px 0}
+.listing-checklist ul{list-style:none;margin:14px 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.listing-checklist li{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;color:#607985;line-height:1.5}
+.listing-checklist li>svg{flex-shrink:0}
+.listing-checklist li.complete{color:#006676}
+.listing-checklist li small{display:block;width:100%;font-size:9px;color:#607985;padding-left:21px;margin-top:-3px}
+.listing-checklist .btn{width:100%;font-size:10px;padding:9px 7px;gap:5px;white-space:normal;line-height:1.6;margin-top:5px}
+.listing-checklist .btn svg{flex-shrink:0}
+.listing-ready-divider{border-top:1px solid #dcecf1;margin:15px 0 12px}
+.item-ai-box{padding:18px;border:1px solid #a9d7e0;border-radius:10px;background:#f5fbfc;display:flex;flex-direction:column;gap:12px;min-width:0}
+.item-ai-heading{display:flex;align-items:flex-start;gap:10px;margin-bottom:3px}
+.item-ai-symbol{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:#e4f3f7;color:#006676;border-radius:8px;flex-shrink:0}
+.item-ai-heading h3{font-size:14px;font-weight:600;color:#173e4b;line-height:1.5;margin:0 0 4px}
+.item-ai-heading p{font-size:10px;color:#607985;line-height:1.8;margin:0}
+.item-ai-box>.form-grid{grid-template-columns:1fr}
+.item-ai-box>.btn{align-self:flex-start}
+.item-ai-box .optional{font-size:10px;font-weight:400;color:#607985}
+.item-ai-box>.small{font-size:10px;line-height:1.8}
+.item-ai-proposal{display:flex;flex-direction:column;gap:12px;border-top:1px solid #cbe3e9;padding-top:17px;margin-top:4px;min-width:0}
+.item-ai-proposal>.section-kicker{font-size:9px;color:#006676}
+.item-ai-proposal>strong{font-size:13px;line-height:1.75;color:#173e4b;overflow-wrap:anywhere}
+.item-ai-proposal textarea{font-size:12px;line-height:1.85;min-height:170px;resize:vertical;background:#fff;white-space:pre-wrap}
+.item-ai-proposal>.btn{align-self:flex-start}
+.item-ai-error{font-size:11px;line-height:1.8;color:#9d463d;background:#fff4f1;border:1px solid #ecd0c8;padding:11px;border-radius:7px}
+.item-modal-actions{flex-wrap:wrap}.item-modal-actions .listing-save-button{font-size:11px;white-space:normal;line-height:1.5}
+@media(max-width:600px){.item-modal-actions .listing-save-button{flex-basis:100%;order:-1}.item-modal-actions{gap:8px}}
+@media(max-width:600px){.listing-checklist{grid-column:1/-1;margin-top:15px;padding:15px}.listing-checklist ul{display:grid;grid-template-columns:1fr 1fr;gap:14px}.listing-checklist .btn{width:auto;font-size:11px;padding:9px 12px}.listing-checklist li{font-size:11px}.item-ai-box{padding:15px}.item-ai-heading p{font-size:11px}.item-ai-box>.btn,.item-ai-proposal>.btn{width:100%;justify-content:center;font-size:11px}.item-ai-box textarea,.listing-copy-field textarea{font-size:16px}}
+
 /* Sales summary: period results and current stock have separate labels. */
 .report-summary{margin-bottom:23px;min-width:0}
 .report-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:17px}
