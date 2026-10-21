@@ -126,15 +126,36 @@ export function parseTextResponse(payload:unknown,kind:TextKind,category:string)
  return {...draft.data,description:correctMeasurementLabels(draft.data.description)};
 }
 
-async function fetchTextPayload(config:TextAIConfig,request:ReturnType<typeof buildTextRequest>,fetcher:typeof fetch,signal:AbortSignal){
+type RetryBudget={used:number};
+function textConnectionError(signal:AbortSignal){
+ return signal.aborted?new AITextError(504,"Generowanie trwało zbyt długo. Spróbuj ponownie za chwilę."):new AITextError(502,"Nie udało się połączyć z dostawcą AI. Spróbuj ponownie później.");
+}
+function waitForRetry(delayMs:number,signal:AbortSignal){
+ signal.throwIfAborted();
+ return new Promise<void>((resolve,reject)=>{
+  const onAbort=()=>{clearTimeout(timer);reject(signal.reason);};
+  const timer=setTimeout(()=>{signal.removeEventListener("abort",onAbort);resolve();},delayMs);
+  signal.addEventListener("abort",onAbort,{once:true});
+ });
+}
+async function fetchTextPayload(config:TextAIConfig,request:ReturnType<typeof buildTextRequest>,fetcher:typeof fetch,signal:AbortSignal,retries:RetryBudget){
+ for(;;){
  let response:Response;
+ if(signal.aborted)throw textConnectionError(signal);
  try{response=await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.model)}:generateContent`,{
   method:"POST",headers:{"x-goog-api-key":config.apiKey,"Content-Type":"application/json"},
   body:JSON.stringify(request),signal,
- });}catch{throw new AITextError(502,"Nie udało się połączyć z dostawcą AI. Spróbuj ponownie później.");}
+ });}catch{throw textConnectionError(signal);}
+ // A short provider overload must not require editing optional listing fields.
+ // Both the first draft and its quality correction share two retries and one deadline.
+ if(response.status===503&&retries.used<2){
+  const delayMs=1000*2**retries.used++;
+  try{await response.body?.cancel();await waitForRetry(delayMs,signal);}catch{throw textConnectionError(signal);}
+  continue;
+ }
  if(!response.ok){
   if(response.status===429)throw new AITextError(503,"Wykorzystano dostępny limit Gemini. Spróbuj ponownie później.");
-  if(response.status===503)throw new AITextError(503,"Gemini jest teraz przeciążone. Spróbuj ponownie za chwilę.");
+  if(response.status===503)throw new AITextError(503,"Gemini jest nadal przeciążone mimo automatycznego ponowienia. Spróbuj ponownie za chwilę.");
   let invalidKey=false;
   if(response.status===400){
    try{
@@ -149,15 +170,16 @@ async function fetchTextPayload(config:TextAIConfig,request:ReturnType<typeof bu
  let payload:unknown;
  try{payload=await response.json();}catch{throw new AITextError(502,"Dostawca AI zwrócił nieprawidłową odpowiedź. Spróbuj ponownie.");}
  return payload;
+ }
 }
 
 export async function generateAIText(config:TextAIConfig,item:ListingFacts,input:TextInput,fetcher:typeof fetch=fetch){
- const request=buildTextRequest(item,input),signal=AbortSignal.timeout(60000);
- const result=parseTextResponse(await fetchTextPayload(config,request,fetcher,signal),input.kind,item.category);
+ const request=buildTextRequest(item,input),signal=AbortSignal.timeout(60000),retries:RetryBudget={used:0};
+ const result=parseTextResponse(await fetchTextPayload(config,request,fetcher,signal,retries),input.kind,item.category);
  if(input.kind!=="listing"||input.listingStyle!=="detailed"||!("description" in result))return result;
  if(detailedListingComplete(result.description))return result;
  const correction={...request,contents:[...request.contents,{role:"model",parts:[{text:JSON.stringify(result)}]},{role:"user",parts:[{text:"Popraw wynik: wybrano DŁUGI opis sprzedażowy. Napisz 130–190 słów samego tekstu, minimum 100 bez hasztagów, oraz końcową linię 8–12 różnych, pasujących hasztagów. Wykorzystaj fakty aktualnej rzeczy, rozwiń kontekst zastosowania i stylizacji, zachowaj wady i wymiary. Nie dopisuj cech technicznych. Pisz jak jedna osoba wystawiająca własną rzecz, prostymi słowami, bez «przedstawiamy», formy «my» i katalogowych pochwał. Zwróć pełny JSON."}]}]};
- const revised=parseTextResponse(await fetchTextPayload(config,correction,fetcher,signal),"listing",item.category);
+ const revised=parseTextResponse(await fetchTextPayload(config,correction,fetcher,signal,retries),"listing",item.category);
  if(!("description" in revised)||!detailedListingComplete(revised.description))throw new AITextError(502,"Gemini nie przygotowało długiego opisu z hasztagami. Spróbuj wygenerować ponownie.");
  return revised;
 }

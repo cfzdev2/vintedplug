@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {setImmediate as nextTurn} from "node:timers/promises";
 import {aiRequestInput,buildTextRequest,generateAIText,parseTextResponse,AITextError,textAIConfig,DEFAULT_GEMINI_TEXT_MODEL,LISTING_STYLES,detailedListingComplete} from "../lib/ai-text.ts";
 
 const item={name:"Bluza Nike",brand:"Nike",category:"Bluzy",size:"M",condition:"Dobry",description:"Czarna bluza z haftowanym logo.",measurements:"Szerokość 56 cm, długość 68 cm",flaws:"Przetarcie przy rękawie"};
@@ -168,8 +169,8 @@ test("przerwany, zablokowany lub nieprawidłowy wynik nie trafia do karty rzeczy
  assert.throws(()=>parseTextResponse({promptFeedback:{blockReason:"SAFETY"}},"reply",item.category),e=>e instanceof AITextError&&e.status===422);
 });
 
-test("błędy Gemini nie ujawniają odpowiedzi dostawcy i nie uruchamiają innego API",async()=>{
- for(const [status,expected] of [[400,502],[401,503],[402,503],[403,503],[404,503],[429,503],[500,502],[503,503]]){
+test("błędy konfiguracji, limitu i danych nie są ponawiane i nie ujawniają odpowiedzi Gemini",async()=>{
+ for(const [status,expected] of [[400,502],[401,503],[402,503],[403,503],[404,503],[429,503],[500,502]]){
   let calls=0;
   await assert.rejects(generateAIText(config,item,{kind:"listing"},async()=>{calls++;return new Response("UPSTREAM_SENSITIVE_DETAILS",{status});}),e=>e instanceof AITextError&&e.status===expected&&!e.message.includes("UPSTREAM_SENSITIVE_DETAILS"));
   assert.equal(calls,1);
@@ -177,4 +178,64 @@ test("błędy Gemini nie ujawniają odpowiedzi dostawcy i nie uruchamiają inneg
  await assert.rejects(generateAIText(config,item,{kind:"listing"},async()=>Response.json({error:{message:"UPSTREAM_SENSITIVE_DETAILS",details:[{reason:"API_KEY_INVALID"}]}},{status:400})),e=>e instanceof AITextError&&e.status===503&&!e.message.includes("UPSTREAM_SENSITIVE_DETAILS"));
  await assert.rejects(generateAIText(config,item,{kind:"listing"},async()=>{throw new Error("UPSTREAM_SENSITIVE_DETAILS");}),e=>e instanceof AITextError&&e.status===502&&!e.message.includes("UPSTREAM_SENSITIVE_DETAILS"));
  await assert.rejects(generateAIText(config,item,{kind:"listing"},async()=>new Response("not JSON",{status:200})),e=>e instanceof AITextError&&e.status===502);
+});
+
+test("każda wersja generuje bez słów kluczowych, także po chwilowym 503, bez zmiany danych",async(t)=>{
+ t.mock.timers.enable({apis:["setTimeout"]});
+ for(const listingStyle of LISTING_STYLES)for(const keywords of [undefined,"","   ","ciepła"]){
+  const requests=[],expected=listingStyle==="detailed"?detailedDraft:draft;
+  const pending=generateAIText(config,item,{kind:"listing",listingStyle,...(keywords===undefined?{}:{keywords})},async(url,init)=>{
+   requests.push({url,body:init.body,signal:init.signal});
+   return requests.length===1?new Response("TEMPORARY_OVERLOAD",{status:503}):Response.json(envelope(JSON.stringify(expected)));
+  });
+  await nextTurn();assert.equal(requests.length,1);
+  t.mock.timers.tick(999);await nextTurn();assert.equal(requests.length,1);
+  t.mock.timers.tick(1);assert.deepEqual(await pending,expected);
+  assert.equal(requests.length,2);assert.equal(requests[0].url,requests[1].url);
+  assert.equal(requests[0].body,requests[1].body);assert.equal(requests[0].signal,requests[1].signal);
+  const payload=JSON.parse(JSON.parse(requests[0].body).contents[0].parts[0].text);
+  assert.equal(payload.keywords,keywords?.trim()??"");assert.deepEqual(payload.item,item);
+ }
+});
+
+test("ciągłe przeciążenie kończy się po trzech próbach, z przerwami i bez pętli",async(t)=>{
+ t.mock.timers.enable({apis:["setTimeout"]});let calls=0;
+ const pending=assert.rejects(generateAIText(config,item,{kind:"listing",keywords:""},async()=>{
+  calls++;return new Response("UPSTREAM_SENSITIVE_DETAILS",{status:503});
+ }),e=>e instanceof AITextError&&e.status===503&&!e.message.includes("UPSTREAM_SENSITIVE_DETAILS"));
+ await nextTurn();assert.equal(calls,1);
+ t.mock.timers.tick(1000);await nextTurn();assert.equal(calls,2);
+ t.mock.timers.tick(1999);await nextTurn();assert.equal(calls,2);
+ t.mock.timers.tick(1);await pending;assert.equal(calls,3);
+ t.mock.timers.tick(60000);await nextTurn();assert.equal(calls,3);
+});
+
+test("korekta szczegółowego opisu dzieli budżet przeciążeń z pierwszą generacją",async(t)=>{
+ t.mock.timers.enable({apis:["setTimeout"]});const requests=[];
+ const pending=assert.rejects(generateAIText(config,item,{kind:"listing",listingStyle:"detailed"},async(_,init)=>{
+  requests.push(JSON.parse(init.body));return requests.length===2?Response.json(envelope(JSON.stringify(draft))):new Response("OVERLOAD",{status:503});
+ }),e=>e instanceof AITextError&&e.status===503);
+ await nextTurn();t.mock.timers.tick(1000);await nextTurn();assert.equal(requests.length,3);
+ t.mock.timers.tick(2000);await pending;assert.equal(requests.length,4);
+ assert.deepEqual(requests[0],requests[1]);assert.deepEqual(requests[2],requests[3]);
+ assert.deepEqual(requests[0].contents[0],requests[2].contents[0]);
+});
+
+test("upłynięcie wspólnego limitu czasu przerywa oczekiwanie i blokuje następne wywołanie",async(t)=>{
+ t.mock.timers.enable({apis:["setTimeout"]});const controller=new AbortController();let calls=0;
+ t.mock.method(AbortSignal,"timeout",()=>controller.signal);
+ const pending=assert.rejects(generateAIText(config,item,{kind:"listing"},async()=>{
+  calls++;return new Response("OVERLOAD",{status:503});
+ }),e=>e instanceof AITextError&&e.status===504);
+ await nextTurn();controller.abort();await pending;
+ t.mock.timers.tick(60000);await nextTurn();assert.equal(calls,1);
+});
+
+test("chwilowe przeciążenie odpowiedzi kupującemu również nie wymaga słów kluczowych",async(t)=>{
+ t.mock.timers.enable({apis:["setTimeout"]});let calls=0;
+ const pending=generateAIText(config,item,{kind:"reply",question:"Jaka szerokość?"},async()=>{
+  calls++;return calls===1?new Response("OVERLOAD",{status:503}):Response.json(envelope("Cześć! Szerokość wynosi 56 cm."));
+ });
+ await nextTurn();t.mock.timers.tick(1000);
+ assert.deepEqual(await pending,{text:"Cześć! Szerokość wynosi 56 cm."});assert.equal(calls,2);
 });
