@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {metrics,parseMoney,itemInput,itemProfit,descriptionTemplate,itemStatusOptions,itemStatusIssue} from "../lib/domain.ts";
+import {metrics,parseMoney,itemInput,itemProfit,descriptionTemplate,itemStatusOptions,itemStatusIssue,reportPeriod,customPeriodIssue} from "../lib/domain.ts";
 const period={from:"2026-10-01",to:"2026-10-31"};
 const item={id:"item-a",accountId:"account-a",name:"Bluza",brand:"",category:"Bluzy",size:"L",condition:"Dobry",description:"",measurements:"",flaws:"Mała plama",location:"",purchasePrice:4500,extraCost:500,listPrice:9000,salePrice:null,minimumProfit:2500,status:"listed",purchaseDate:"2026-10-02",listDate:"2026-10-03",saleDate:null,imageIds:[],illustration:"hoodie",createdAt:"2026-10-02",updatedAt:"2026-10-02",revision:1};
 test("niesprzedany zakup zwiększa wydatki i zapasy, nie pomniejsza wyniku sprzedaży",()=>{
@@ -85,5 +85,55 @@ test("istniejące sprzedaże i zwroty pozostają edytowalne, status można też 
  for(const previous of ["sold","returned"]){
   assert.equal(itemStatusIssue("draft",previous),null);
   assert.equal(itemStatusIssue("listed",previous),null);
+ }
+});
+
+test("liczby w magazynie pokazują bieżące statusy, a sprzedane dotyczą wybranego okresu",()=>{
+ const items=[item,{...item,id:"draft",status:"draft",purchaseDate:"2026-08-01"},{...item,id:"returned",status:"returned"},{...item,id:"sold-now",status:"sold",salePrice:9000,saleDate:"2026-10-31"},{...item,id:"sold-before",status:"sold",salePrice:9000,saleDate:"2026-09-30"}];
+ const m=metrics(items,[],period),other=metrics(items,[],{from:"2026-08-01",to:"2026-08-31"});
+ assert.equal(m.activeCount,1);assert.equal(m.draftCount,1);assert.equal(m.returnedCount,1);assert.equal(m.inventoryCount,3);assert.equal(m.soldCount,1);
+ assert.equal(m.inventory,15000);assert.equal(other.inventory,m.inventory);assert.equal(other.inventoryCount,m.inventoryCount);assert.equal(other.soldCount,0);
+});
+
+test("sumy wszystkich kont są zgodne z oddzielnymi pulpitami, także przy stracie",()=>{
+ const items=[{...item,status:"sold",salePrice:9000,saleDate:"2026-10-10"},{...item,id:"b-sold",accountId:"account-b",status:"sold",salePrice:4000,saleDate:"2026-10-11"},{...item,id:"b-stock",accountId:"account-b",status:"draft"}];
+ const expenses=[{accountId:"account-a",amount:300,date:"2026-10-01"},{accountId:"account-b",amount:700,date:"2026-10-12"},{accountId:"account-b",amount:999,date:"2026-09-01"}];
+ const a=metrics(items.filter(i=>i.accountId==="account-a"),expenses.filter(e=>e.accountId==="account-a"),period),b=metrics(items.filter(i=>i.accountId==="account-b"),expenses.filter(e=>e.accountId==="account-b"),period),all=metrics(items,expenses,period);
+ assert.equal(a.profit,3700);assert.equal(b.profit,-1700);assert.equal(b.margin,-42);assert.equal(a.inventory,0);assert.equal(b.inventory,5000);
+ for(const key of ["revenue","profit","spending","purchases","overhead","inventory","inventoryCount","activeCount","draftCount","returnedCount","soldCount"])assert.equal(all[key],a[key]+b[key],key);
+});
+
+test("zerowe dane nie dają fikcyjnej marży ani przedmiotów",()=>{
+ const m=metrics([],[],period);
+ for(const key of ["revenue","profit","spending","inventory","inventoryCount","activeCount","draftCount","returnedCount","soldCount"])assert.equal(m[key],0);
+ assert.equal(m.margin,null);
+});
+
+test("zakres miesiąca uwzględnia rok przestępny i przejście do poprzedniego roku",()=>{
+ const data={items:[],expenses:[]};
+ assert.deepEqual(reportPeriod("month",data,"","","2024-02-15"),{from:"2024-02-01",to:"2024-02-29"});
+ assert.deepEqual(reportPeriod("previous",data,"","","2026-01-31"),{from:"2025-12-01",to:"2025-12-31"});
+ assert.deepEqual(reportPeriod("previous",data,"","","2024-03-31"),{from:"2024-02-01",to:"2024-02-29"});
+});
+
+test("ostatnie 30 dni obejmuje dokładnie 30 dat wraz z dzisiejszą",()=>{
+ const p=reportPeriod("30",{items:[],expenses:[]},"","","2026-03-01");
+ assert.deepEqual(p,{from:"2026-01-31",to:"2026-03-01"});
+ assert.equal((Date.parse(p.to)-Date.parse(p.from))/86400000+1,30);
+});
+
+test("cała historia bierze daty zakupu, sprzedaży i wydatków z przekazanego zakresu kont",()=>{
+ const data={items:[{...item,purchaseDate:"2025-04-10",saleDate:"2026-10-25"}],expenses:[{amount:300,date:"2025-03-01"}]};
+ assert.deepEqual(reportPeriod("all",data,"","","2026-10-21"),{from:"2025-03-01",to:"2026-10-25"});
+ assert.deepEqual(reportPeriod("all",{items:[],expenses:[]},"","","2026-10-21"),{from:"2026-10-21",to:"2026-10-21"});
+});
+
+test("własny zakres zachowuje daty, a niepełny lub odwrócony zakres wymaga poprawienia",()=>{
+ const data={items:[],expenses:[]};
+ assert.equal(customPeriodIssue("2026-10-01","2026-10-01"),null);
+ assert.deepEqual(reportPeriod("custom",data,"2026-09-15","2026-10-15","2026-10-21"),{from:"2026-09-15",to:"2026-10-15"});
+ for(const [from,to] of [["","2026-10-21"],["2026-10-01",""],["2026-10-21","2026-10-01"],["2026-02-30","2026-03-01"]]){
+  assert.ok(customPeriodIssue(from,to));
+  assert.deepEqual(reportPeriod("custom",data,from,to,"2026-10-21"),{from:"2026-10-21",to:"2026-10-21"});
  }
 });

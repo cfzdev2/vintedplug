@@ -24,6 +24,16 @@ Nową rzecz można dodać jako „Szkic” lub „Wystawione”. „Sprzedane”
 
 Edycja rzeczy ma kontrolę rewizji, aby wykrywać równoczesne zmiany w kilku oknach. Usunięcie konta wymaga wpisania jego nazwy i usuwa jego rzeczy oraz wydatki. Zdjęcia są prywatne, a format i rozmiar pliku sprawdzane po stronie serwera.
 
+## Pulpit i zestawienia kont — 21 października 2026
+
+Pulpit i Finanse mają wspólne podsumowanie: obrót, zysk, wydatki i pieniądze w towarze. Nagłówek podaje wybrane konto (albo wszystkie konta) i pełne daty okresu. Trzy pierwsze kwoty mają oznaczenie „W okresie”, a koszt niesprzedanych rzeczy „Teraz”. Rozwijane wyjaśnienie pokazuje znaczenie liczb oraz rozbicie wydatków na zakupy z dodatkowymi kosztami rzeczy i koszty konta. Zysk nadal jest obliczany po koszcie sprzedanych rzeczy i wydatkach konta, przed podatkiem i nieujętymi kosztami; zakup niesprzedanej rzeczy nie pomniejsza go ponownie. Nie zmieniono zapisanych danych ani reguł księgowania zwrotu.
+
+Niżej znajdują się skróty: wystawione teraz, sprzedaże w okresie, szkice teraz i zwroty teraz. Pierwszy, trzeci i czwarty otwierają magazyn z odpowiednim statusem oraz wyczyszczonym wyszukiwaniem; sprzedaże otwierają Finanse z zachowanym kontem i zakresem dat. Karty kont pokazują cztery kwoty oraz liczbę wystawionych i sprzedanych rzeczy. „Wynik” w podsumowaniach i legendzie wykresu został nazwany „Zysk”.
+
+Dotychczasowe filtry okresu pozostają: bieżący miesiąc, poprzedni miesiąc, ostatnie 30 dni, cała historia i własny zakres. Wyznaczanie okresów przeniesiono do `reportPeriod` w `lib/domain.ts`, a walidację własnego zakresu do `customPeriodIssue`. Cała historia na pulpicie obejmuje daty danych wybranego konta; w przeglądzie wszystkich kart kont okres jest wspólny. Niepełne lub odwrócone daty wyświetlają błąd i wstrzymują zestawienie finansowe oraz eksport, zamiast po cichu przyjmować inny zakres. Pola dat reagują na zdarzenie input, aby od razu przeliczać raport.
+
+Testy obejmują bieżące liczby statusów niezależne od okresu, sumowanie kont, straty, pusty pulpit, rok przestępny, przejście roku, dokładnie 30 dni i poprawność własnych dat. Lokalny podgląd w przeglądarce na danych demo sprawdził układ pulpitu, przełączanie kont i miesięcy, zachowanie wartości zapasów, rozwijane objaśnienie, skróty oraz blokadę raportu i eksportu dla odwróconych dat. Tymczasowy widok testowy usunięto przed kompilacją; produkcyjne logowanie i źródłowa strona główna zostały zachowane.
+
 ## AI
 
 Szablony opisów/odpowiedzi i kalkulator negocjacji działają bez dostawcy AI; są wyraźnie oznaczone jako szablony.

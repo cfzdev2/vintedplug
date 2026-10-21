@@ -34,9 +34,21 @@ export type Period={from:string;to:string};
 export function inPeriod(d:string|null,p:Period){return !!d&&d>=p.from&&d<=p.to;}
 export function metrics(items:Item[],expenses:Expense[],p:Period){
  const sold=items.filter(i=>i.status==="sold"&&inPeriod(i.saleDate,p)),revenue=sold.reduce((s,i)=>s+(i.salePrice??0),0),soldCost=sold.reduce((s,i)=>s+itemCost(i),0),overhead=expenses.filter(e=>inPeriod(e.date,p)).reduce((s,e)=>s+e.amount,0),purchases=items.filter(i=>inPeriod(i.purchaseDate,p)).reduce((s,i)=>s+itemCost(i),0),inventory=items.filter(i=>i.status!=="sold").reduce((s,i)=>s+itemCost(i),0);
- return {revenue,profit:revenue-soldCost-overhead,overhead,purchases,spending:purchases+overhead,soldCount:sold.length,activeCount:items.filter(i=>i.status==="listed").length,inventory,cashflow:revenue-purchases-overhead,margin:revenue?Math.round((revenue-soldCost-overhead)/revenue*100):null};
+ return {revenue,profit:revenue-soldCost-overhead,overhead,purchases,spending:purchases+overhead,soldCount:sold.length,activeCount:items.filter(i=>i.status==="listed").length,draftCount:items.filter(i=>i.status==="draft").length,returnedCount:items.filter(i=>i.status==="returned").length,inventoryCount:items.filter(i=>i.status!=="sold").length,inventory,cashflow:revenue-purchases-overhead,margin:revenue?Math.round((revenue-soldCost-overhead)/revenue*100):null};
 }
 export function monthPeriod(d=today()):Period{return {from:d.slice(0,7)+"-01",to:new Date(Date.UTC(Number(d.slice(0,4)),Number(d.slice(5,7)),0)).toISOString().slice(0,10)};}
+export function customPeriodIssue(from:string,to:string){
+ if(!date.safeParse(from).success||!date.safeParse(to).success)return "Wybierz prawidłową datę początku i końca okresu.";
+ return to<from?"Data końca nie może być wcześniejsza niż data początku.":null;
+}
+export function reportPeriod(kind:string,data:Pick<Workspace,"items"|"expenses">,from:string,to:string,day=today()):Period{
+ if(kind==="month")return monthPeriod(day);
+ if(kind==="previous"){const d=new Date(day+"T12:00:00Z");d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()-1);return monthPeriod(d.toISOString().slice(0,10));}
+ if(kind==="30"){const d=new Date(day+"T12:00:00Z");d.setUTCDate(d.getUTCDate()-29);return {from:d.toISOString().slice(0,10),to:day};}
+ if(kind==="all"){const dates=[...data.items.map(i=>i.purchaseDate),...data.items.map(i=>i.saleDate).filter((d):d is string=>!!d),...data.expenses.map(e=>e.date),day].sort();return {from:dates[0],to:dates[dates.length-1]};}
+ // Keep consumers safe while custom date inputs are incomplete; the UI hides the report and export until valid.
+ return customPeriodIssue(from,to)?{from:day,to:day}:{from,to};
+}
 export function descriptionTemplate(i:Item){return [i.name,[i.brand&&`Marka: ${i.brand}`,i.size&&`Rozmiar z metki: ${i.size}`,`Stan: ${i.condition}`].filter(Boolean).join("\n"),i.measurements&&`Wymiary:\n${i.measurements}`,i.flaws&&`Wady / ślady użytkowania: ${i.flaws}`].filter(Boolean).join("\n\n");}
 export function replyTemplate(i:Item,q:string){
  if(/wymiar|szerok|długo|dlugo|pasie|rękaw|rekaw/i.test(q))return i.measurements?`Cześć! Wymiary tej rzeczy: ${i.measurements}.`:"[Uzupełnij wymiary w karcie rzeczy, aby przygotować odpowiedź].";
