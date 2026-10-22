@@ -16,7 +16,7 @@ export const expenses=sqliteTable("vp_expenses",{
  id:text("id").primaryKey(),owner:text("owner").notNull(),accountId:text("account_id").notNull().references(()=>accounts.id,{onDelete:"cascade"}),label:text("label").notNull(),amount:integer("amount").notNull(),date:text("date").notNull(),category:text("category").notNull().default("Inne"),createdAt:text("created_at").notNull(),
 },t=>[index("vp_expenses_owner_account").on(t.owner,t.accountId)]);
 export const uploads=sqliteTable("vp_uploads",{
- id:text("id").primaryKey(),owner:text("owner").notNull(),key:text("key").notNull(),mime:text("mime").notNull(),bytes:integer("bytes").notNull(),createdAt:text("created_at").notNull(),
+ id:text("id").primaryKey(),owner:text("owner").notNull(),key:text("key").notNull(),mime:text("mime").notNull(),bytes:integer("bytes").notNull(),createdAt:text("created_at").notNull(),originalId:text("original_id"),
 },t=>[index("vp_uploads_owner").on(t.owner)]);
 export const aiUsage=sqliteTable("vp_ai_usage",{id:text("id").primaryKey(),owner:text("owner").notNull(),day:text("day").notNull(),kind:text("kind").notNull(),count:integer("count").notNull().default(0)});
 export const earningGuides=sqliteTable("vp_earning_guides",{

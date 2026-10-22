@@ -118,3 +118,13 @@ pnpm exec tsc --noEmit
 Instalacja, build i publikacja: według umiejętności Sites. Schemat bazy w `db/schema.ts`, migracje w `drizzle/`. Nie zmieniaj opublikowanych migracji; dodawaj kolejne.
 
 Następne integracje: Supabase dla wersji SaaS, testy modeli AI, Stripe i limity planów. Bieżący kod i historia są przechowywane w repozytorium źródłowym Site.
+
+## Zdjęcia w karcie rzeczy — 22 października 2026
+
+Karta pozwala wybrać zdjęcie główne (pierwszy element imageIds), zmieniać kolejność przez przeciąganie lub przyciski strzałek, odłączać zdjęcia i pobrać wybrany plik. Zmiany kolejności i wyboru wersji zachowuje zapis karty. Studio ma skrót do tych samych narzędzi w karcie rzeczy.
+
+Edytor ręczny działa w przeglądarce: obrót co 90°, proporcje całego zdjęcia, 1:1, 4:5 i 3:4, przybliżenie do 3×, położenie kadru i jasność 80–120%. Pokazuje podgląd wyniku, reset i anulowanie. Eksportuje nowy WebP (albo PNG, gdy przeglądarka nie obsługuje WebP), maksymalnie 2400 px dłuższego boku, do 8 MB. Nie wywołuje AI i nie zmienia konfiguracji dostawców.
+
+Nowy upload zastępuje wybraną wersję w bieżącej karcie, pozostawiając oryginał w prywatnym R2. Migracja 0002 dodaje nullable original_id do vp_uploads; starsze pliki z NULL są traktowane jako oryginały. Serwer sprawdza właściciela zdjęcia źródłowego i oryginału przed zapisaniem powiązania. Każda kolejna edycja wskazuje bezpośrednio oryginał, dzięki czemu działa powrót również po ponownym otwarciu panelu. Wersje są odczytywane wyłącznie w zakresie zalogowanego właściciela. Lista obejmuje oryginał, 30 ostatnich edycji oraz bieżącą wersję, jeśli jest starsza. Żadne wersje nie są automatycznie usuwane. Przywrócenie wersji już obecnej na liście eliminuje duplikat. Pobieranie ma poprawne rozszerzenie, prywatną kontrolę dostępu i no-store.
+
+53 testy obejmują finanse, statusy, poradnik, teksty AI i nową logikę zdjęć: kolejność, podmianę bez duplikatów, zachowanie i kontrolę własności oryginału oraz granice kadru po obrocie/przybliżeniu. Nowa migracja została zastosowana do osobnej lokalnej bazy. QA w przeglądarce na tymczasowym formularzu i testowych endpointach sprawdziło wybór głównego, strzałki, obrót, proporcje 4:5 (podgląd 720×900), przybliżenie, położenie, jasność, zapis nowego pliku, zachowanie pól finansowych, ponowne otwarcie karty i przywrócenie oryginału. Symulowane 503 zachowało poprzednie zdjęcie i aktywną możliwość ponowienia zapisu. Przeciąganie sprawdzono w logice i kodzie obsługi, nie przez automatyzację gestu w przeglądarce. Tymczasowe pliki i trasy testowe usunięto, a produkcyjne logowanie i endpointy przywrócono przed kompilacją. Nie zmieniano rzeczywistych rekordów użytkownika podczas QA.

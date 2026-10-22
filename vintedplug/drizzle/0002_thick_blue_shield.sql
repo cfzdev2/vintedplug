@@ -1,0 +1,1 @@
+ALTER TABLE `vp_uploads` ADD `original_id` text;

@@ -35,10 +35,10 @@ export async function snapshot(uid:string){
  const strip=<T extends {owner:string}>(r:T)=>{const {owner:_,...rest}=r;return rest;};
  return {accounts:a.map(strip),items:i.map(strip),expenses:e.map(strip),earningGuide:g?{chapters:normalizeGuideChapters(g.chapters),revision:g.revision,updatedAt:g.updatedAt}:null,config:{guideEditor:await guideEditPermission(uid,g?.owner),textAI:!!textAIConfig(env),imageAI:!!(env.OPENAI_API_KEY&&env.OPENAI_IMAGE_MODEL&&env.IMAGE_AI_ENABLED==="true")}};
 }
-export async function saveUpload(uid:string,bytes:ArrayBuffer|Uint8Array,mime:string){
+export async function saveUpload(uid:string,bytes:ArrayBuffer|Uint8Array,mime:string,originalId:string|null=null){
  if(!env.BUCKET)throw new HttpError(503,"Magazyn zdjęć jest chwilowo niedostępny.");
  const id=crypto.randomUUID(),key=`photos/${id}`;await env.BUCKET.put(key,bytes,{httpMetadata:{contentType:mime}});
- try{await getDb().insert(uploads).values({id,owner:uid,key,mime,bytes:bytes.byteLength,createdAt:new Date().toISOString()});}catch(e){await env.BUCKET.delete(key);throw e;}
+ try{await getDb().insert(uploads).values({id,owner:uid,key,mime,bytes:bytes.byteLength,createdAt:new Date().toISOString(),originalId});}catch(e){await env.BUCKET.delete(key);throw e;}
  return {id,url:`/api/files/${id}`};
 }
 export async function reserveAI(uid:string,kind:"text"|"image"){

@@ -1,4 +1,5 @@
-import {owner,apiError,saveUpload,HttpError} from "@/lib/server";
+import {owner,ownUpload,apiError,saveUpload,HttpError} from "@/lib/server";
+import {photoOriginal} from "@/lib/photos";
 export const dynamic="force-dynamic";
 export async function POST(req:Request){try{
  const uid=await owner();if(req.headers.get("sec-fetch-site")==="cross-site")throw new HttpError(403,"Niedozwolone źródło.");
@@ -8,5 +9,8 @@ export async function POST(req:Request){try{
  if(b[0]===0xff&&b[1]===0xd8&&b[2]===0xff)mime="image/jpeg";
  if(b[0]===137&&b[1]===80&&b[2]===78&&b[3]===71)mime="image/png";
  if(String.fromCharCode(...b.slice(0,4))==="RIFF"&&String.fromCharCode(...b.slice(8,12))==="WEBP")mime="image/webp";
- if(!mime)throw new HttpError(400,"Obsługujemy zdjęcia JPG, PNG i WebP.");return Response.json(await saveUpload(uid,bytes,mime),{status:201});
+ if(!mime)throw new HttpError(400,"Obsługujemy zdjęcia JPG, PNG i WebP.");
+ const source=data.get("sourceId");if(source!==null&&(typeof source!=="string"||!source||source.length>80))throw new HttpError(400,"Nieprawidłowe zdjęcie źródłowe.");
+ const originalId=typeof source==="string"?await photoOriginal(source,id=>ownUpload(uid,id)):null;
+ return Response.json(await saveUpload(uid,bytes,mime,originalId),{status:201});
 }catch(e){return apiError(e);}}
