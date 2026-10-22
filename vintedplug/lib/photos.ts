@@ -23,3 +23,7 @@ export function photoCrop(width:number,height:number,edits:PhotoEdits){
  const zoom=Math.min(3,Math.max(1,edits.zoom));cw/=zoom;ch/=zoom;
  return {rotation,width:w,height:h,cropWidth:cw,cropHeight:ch,left:(w-cw)*Math.min(100,Math.max(0,edits.x))/100,top:(h-ch)*Math.min(100,Math.max(0,edits.y))/100};
 }
+export function photoPanAvailability(width:number,height:number,edits:PhotoEdits){
+ const crop=photoCrop(width,height,edits);
+ return {x:crop.width-crop.cropWidth>1,y:crop.height-crop.cropHeight>1};
+}

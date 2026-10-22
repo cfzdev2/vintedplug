@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {movePhoto,replacePhoto,photoOriginal,photoCrop,defaultPhotoEdits} from "../lib/photos.ts";
+import {movePhoto,replacePhoto,photoOriginal,photoCrop,photoPanAvailability,defaultPhotoEdits} from "../lib/photos.ts";
 
 test("kolejność i wybór głównego nie gubią zdjęć",()=>{
  const ids=["a","b","c","d"];
@@ -32,4 +32,17 @@ test("obrót, proporcje, przybliżenie i skrajne położenia zachowują kadr wew
   assert.ok(crop.left>=0&&crop.top>=0);assert.ok(crop.left+crop.cropWidth<=crop.width+.001);assert.ok(crop.top+crop.cropHeight<=crop.height+.001);
   if(ratio)assert.ok(Math.abs(crop.cropWidth/crop.cropHeight-ratio)<.001);
  }
+});
+test("suwaki położenia są dostępne tylko w osiach z miejscem na przesunięcie",()=>{
+ assert.deepEqual(photoPanAvailability(1200,800,defaultPhotoEdits),{x:false,y:false});
+ assert.deepEqual(photoPanAvailability(1200,800,{...defaultPhotoEdits,ratio:1}),{x:true,y:false});
+ assert.deepEqual(photoPanAvailability(1200,800,{...defaultPhotoEdits,ratio:1,rotation:90}),{x:false,y:true});
+ for(const rotation of [0,90,180,270])for(const ratio of [null,1,.8,.75]){
+  const edits={...defaultPhotoEdits,rotation,ratio,zoom:1.15};
+  assert.deepEqual(photoPanAvailability(1200,800,edits),{x:true,y:true});
+  const start=photoCrop(1200,800,{...edits,x:0,y:0}),end=photoCrop(1200,800,{...edits,x:100,y:100});
+  assert.ok(end.left>start.left);assert.ok(end.top>start.top);
+ }
+ // Resetting the editor returns to an uncropped image and disabled position sliders.
+ assert.deepEqual(photoPanAvailability(800,1200,{...defaultPhotoEdits}),{x:false,y:false});
 });
