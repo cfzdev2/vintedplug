@@ -14,11 +14,12 @@
     "db:generate": "drizzle-kit generate",
     "local:setup": "node scripts/local-setup.mjs",
     "typecheck": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
-    "test": "node --experimental-strip-types --test tests/finance.test.mjs tests/guide.test.mjs tests/ai-text.test.mjs tests/photos.test.mjs tests/ai-image.test.mjs"
+    "test": "node --experimental-strip-types --test tests/finance.test.mjs tests/guide.test.mjs tests/ai-text.test.mjs tests/photos.test.mjs tests/ai-image.test.mjs tests/local-background.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^5.7.1",
+    "@huggingface/transformers": "4.3.1",
     "@shadcn/react": "^0.3.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

@@ -6,6 +6,6 @@ IMAGE_AI_ENABLED="false"
 GEMINI_TEXT_MODEL="gemini-3.5-flash-lite"
 # GEMINI_API_KEY=""
 
-# Zdjęcia: Photoroom Remove Background API, domyślnie wyłączone.
+# Lokalne usuwanie tła działa bez klucza. Photoroom jest opcjonalny i wyłączony.
 # PHOTOROOM_API_KEY=""
 # Ustaw IMAGE_AI_ENABLED="true" dopiero po dodaniu klucza i sprawdzeniu kredytów.

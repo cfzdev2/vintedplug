@@ -60,3 +60,6 @@ next-env.d.ts
 !.dev.vars.example
 !.env.example
 *.tsbuildinfo
+
+# Rebuilt from the pinned local inference dependencies.
+/public/local-ai/
