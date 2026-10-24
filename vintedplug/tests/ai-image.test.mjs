@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {BACKGROUNDS} from "../lib/backgrounds.ts";
+import {BACKGROUNDS,PHOTO_BACKGROUNDS,isSolidBackground} from "../lib/backgrounds.ts";
 import {imageAIConfig,changeImageBackground,processBackground,ImageAIError,MAX_IMAGE_BYTES} from "../lib/ai-image.ts";
 
 const png=Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==","base64"));
@@ -69,5 +69,5 @@ test("błąd dostawcy lub zapisu oddaje dokładnie jedną rezerwację panelu",as
 });
 
 test("tekstury lokalne nie uruchamiają płatnego dostawcy ani nie udają jednolitego koloru",async()=>{
- for(const style of ["wood","concrete"])await assert.rejects(()=>changeImageBackground(config,{...input,style},async()=>assert.fail("provider called")),error=>error instanceof ImageAIError&&error.status===400);
+ for(const style of Object.keys(PHOTO_BACKGROUNDS).filter(style=>!isSolidBackground(style)))await assert.rejects(()=>changeImageBackground(config,{...input,style},async()=>assert.fail("provider called")),error=>error instanceof ImageAIError&&error.status===400);
 });

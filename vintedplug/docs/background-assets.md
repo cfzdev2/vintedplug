@@ -15,3 +15,5 @@ Use case: product-mockup. Asset type: reusable photo background texture for seco
 
 Use case: product-mockup. Asset type: reusable photo background texture for secondhand clothing flat lay. Create a photorealistic empty smooth gray architectural concrete surface seen perfectly straight from above, orthographic view. A square image filled edge to edge with continuous pale neutral gray concrete, subtle irregular cement mottling and small pores, restrained realistic fine grain. Clean matte concrete suitable as a background behind clothing. Soft uniform diffuse daylight, flat even exposure, no strong directional shadows or vignette. No room, no walls, no horizon, no joints or tiles, no objects, no clothing, no text, no logos, no watermark. High resolution realistic material photograph.
 
+
+Rozszerzenie o len, dywan ecru, ciemne drewno i grafit oraz pełne prompty: [background-preset-prompts.md](background-preset-prompts.md). Uzasadnienie wyboru: [background-research.md](background-research.md).

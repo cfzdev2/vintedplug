@@ -149,3 +149,4 @@
 
 .background-provider{display:flex;flex-direction:column;gap:8px;font-size:10px;color:#4a6b79}.background-provider select{width:100%;padding:10px;border:1px solid #e1eef2;border-radius:6px;background:white;color:#315765;font-size:11px}.background-placeholder progress{width:100%;max-width:200px;accent-color:#006676}.background-options>.text-button{font-size:9px;text-align:left;line-height:1.7}
 .background-presets button[aria-pressed=true]>span>svg{background:#006676;color:#fff;border-radius:50%;padding:2px;box-sizing:content-box}
+.background-style-hint{font-size:10px;line-height:1.7;color:#4a6b79;background:#f2f8fa;border:1px solid #e1eef2;border-radius:6px;padding:10px 11px}
