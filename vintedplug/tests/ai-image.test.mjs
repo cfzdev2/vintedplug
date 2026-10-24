@@ -67,3 +67,7 @@ test("błąd dostawcy lub zapisu oddaje dokładnie jedną rezerwację panelu",as
  const providerFail=fixture();await assert.rejects(()=>processBackground("original","paper",providerFail.access,async()=>{throw new ImageAIError(503,"failed");}));assert.equal(providerFail.calls.refund,1);assert.equal(providerFail.calls.save,0);
  const saveFail=fixture({save:async()=>{throw new Error("database");}});await assert.rejects(()=>processBackground("original","paper",saveFail.access,saveFail.generate));assert.equal(saveFail.calls.refund,1);assert.equal(saveFail.calls.generate,1);
 });
+
+test("tekstury lokalne nie uruchamiają płatnego dostawcy ani nie udają jednolitego koloru",async()=>{
+ for(const style of ["wood","concrete"])await assert.rejects(()=>changeImageBackground(config,{...input,style},async()=>assert.fail("provider called")),error=>error instanceof ImageAIError&&error.status===400);
+});

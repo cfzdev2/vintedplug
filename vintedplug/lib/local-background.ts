@@ -1,3 +1,4 @@
+import {PHOTO_BACKGROUNDS,backgroundPlacement,type PhotoBackgroundStyle} from "./backgrounds.ts";
 import type {LocalBackgroundProgress} from "./local-background-core";
 
 export function localBackgroundSupported(){return typeof Worker!=="undefined"&&typeof OffscreenCanvas!=="undefined"&&typeof WebAssembly!=="undefined";}
@@ -23,10 +24,17 @@ export async function removeLocalBackground(image:Blob,onProgress:(value:LocalBa
  }
  try{return await run();}finally{active=false;}
 }
-export async function composeLocalBackground(cutout:Blob,color:string):Promise<Blob>{
+const textureCache=new Map<string,Promise<ImageBitmap>>();
+function loadTexture(url:string){
+ let cached=textureCache.get(url);if(!cached){cached=fetch(url).then(response=>{if(!response.ok)throw new Error("Nie udało się wczytać tekstury tła. Wybierz je ponownie lub użyj jednolitego koloru.");return response.blob();}).then(blob=>createImageBitmap(blob)).catch(error=>{textureCache.delete(url);throw error;});textureCache.set(url,cached);}return cached;
+}
+export async function composeLocalBackground(cutout:Blob,style:PhotoBackgroundStyle):Promise<Blob>{
  const image=await createImageBitmap(cutout);try{
   const canvas=document.createElement("canvas");canvas.width=image.width;canvas.height=image.height;const context=canvas.getContext("2d");if(!context)throw new Error("Brak obsługi podglądu zdjęć.");
-  context.fillStyle=color;context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0);
+  const background=PHOTO_BACKGROUNDS[style];
+  context.fillStyle=background.color;context.fillRect(0,0,canvas.width,canvas.height);
+  if("image" in background){const texture=await loadTexture(background.image),placement=backgroundPlacement(texture.width,texture.height,canvas.width,canvas.height);context.drawImage(texture,placement.x,placement.y,placement.width,placement.height);}
+  context.drawImage(image,0,0);
   const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("Nie udało się przygotować zdjęcia.")),"image/png"));
   if(blob.size>8*1024*1024)throw new Error("Wynik przekracza 8 MB. Zmniejsz zdjęcie w edytorze i spróbuj ponownie.");return blob;
  }finally{image.close();}
