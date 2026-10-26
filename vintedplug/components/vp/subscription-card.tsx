@@ -42,7 +42,7 @@ export function SubscriptionCard({initial,standalone=false}:{initial:BillingView
    {state.status==="past_due"&&<p>Nie udało się pobrać kolejnej opłaty. Zaktualizuj metodę płatności w Stripe.</p>}
   </>}</div>
   {!state.configured&&<p className="subscription-notice">Płatności nie są jeszcze uruchomione. Abonament będzie dostępny po zakończeniu konfiguracji Stripe.</p>}
-  {state.owner&&!state.configured&&<p className="small muted">Do podłączenia: konto Stripe, cena miesięczna, klucz aplikacji i webhook. Instrukcja znajduje się w pliku docs/stripe-setup.md w repozytorium.</p>}
+  {state.owner&&state.keySetup&&<StripeKeyForm state={state} onSaved={next=>{setState(next);setError("");setNotice("Połączenie Stripe zostało zapisane. Następny krok to sprawdzenie zakupu i dostarczania webhooków.");}}/>}
   {notice&&<p className="subscription-notice" role="status">{notice}</p>}{error&&<p className="subscription-error" role="alert">{error}</p>}
   <div className="subscription-actions">
    {state.canCheckout&&<button className="btn primary" disabled={!!busy} onClick={()=>open("checkout")}>{busy==="checkout"?<LoaderCircle className="spin" size={17}/>:<CreditCard size={17}/>}Kup dostęp · 29,90 zł / mies.</button>}
@@ -54,4 +54,24 @@ export function SubscriptionCard({initial,standalone=false}:{initial:BillingView
   {!state.owner&&<p className="subscription-fineprint">Opłata odnawia się co miesiąc. Możesz zrezygnować z kolejnego odnowienia w ustawieniach abonamentu. Po wygaśnięciu dostęp do funkcji zostanie zablokowany, a Twoje dane pozostaną zapisane.</p>}
   <p className="subscription-security"><ShieldCheck size={15}/>Płatność obsługuje Stripe. Dane karty wpisujesz na stronie Stripe.</p>
  </section>;
+}
+
+function StripeKeyForm({state,onSaved}:{state:BillingView;onSaved:(next:BillingView)=>void}){
+ const [key,setKey]=useState(""),[saving,setSaving]=useState(false),[error,setError]=useState("");
+ const setup=state.keySetup!;
+ if(setup.managedExternally)return <p className="small muted">Klucz Stripe jest zarządzany w sekretach hostingu.</p>;
+ return <form className="stripe-key-form" onSubmit={async event=>{
+  event.preventDefault();if(saving)return;setSaving(true);setError("");
+  try{const next=await request<BillingView>("/api/billing/setup",{key});setKey("");onSaved(next);}
+  catch(e){setError(e instanceof Error?e.message:"Nie udało się zapisać połączenia Stripe.");}
+  finally{setSaving(false);}
+ }}>
+  <div><h3>{setup.hasKey?"Połączenie Stripe":"Podłącz Stripe"}</h3><p>{setup.hasKey?"Klucz jest zapisany. Możesz zastąpić go nowym ograniczonym kluczem.":"Wklej ograniczony klucz API utworzony w swoim Stripe. To pole jest dostępne wyłącznie dla właściciela."}</p></div>
+  <label htmlFor="stripe-api-key">{state.mode==="test"?"Klucz testowy Stripe":"Klucz produkcyjny Stripe"}</label>
+  <input id="stripe-api-key" name="stripe-api-key" type="password" value={key} onChange={e=>setKey(e.target.value)} placeholder={state.mode==="test"?"rk_test_…":"rk_live_…"} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={420} required disabled={saving||!setup.ready} aria-describedby="stripe-key-help"/>
+  <p id="stripe-key-help">Przed zapisem sprawdzimy klucz w Stripe. Jest przesyłany do serwera przez HTTPS i zapisywany w postaci zaszyfrowanej. Panel nigdy nie wyświetla zapisanego klucza.</p>
+  {!setup.ready&&<p className="subscription-notice">Bezpieczny zapis klucza czeka na konfigurację hostingu.</p>}
+  {error&&<p className="subscription-error" role="alert">{error}</p>}
+  <button className="btn secondary" disabled={saving||!setup.ready||!key.trim()}>{saving?<LoaderCircle className="spin" size={16}/>:<ShieldCheck size={16}/>}Zapisz i sprawdź klucz</button>
+ </form>;
 }

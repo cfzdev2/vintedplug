@@ -17,6 +17,7 @@ export type BillingView = {
   status: string; paidUntil: number; cancelAt: number; cancelAtPeriodEnd: boolean;
   hasCustomer: boolean; hasSubscription: boolean; canCheckout: boolean;
   price: number; currency: "PLN"; interval: "month";
+  keySetup?: {ready:boolean;hasKey:boolean;managedExternally:boolean};
 };
 export function subscriptionAccess(row: BillingRecord | null, now = Date.now() / 1000) {
   return !!row && ["active", "past_due"].includes(row.status) && row.paid_until > now;

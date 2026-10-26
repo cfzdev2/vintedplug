@@ -6,7 +6,15 @@ Cena: **29,90 PLN co miesiąc**, jeden produkt i jedna cena. Identyfikator ceny 
 
 Zaimplementowane: ekran `/abonament`, karta w Ustawieniach, Stripe Checkout, Customer Portal, serwerowa blokada panelu i wszystkich istniejących API danych/zdjęć/AI, podpisane webhooki cyklu abonamentu, bezpieczne ponowienia, osobne rekordy test/live i wyjątek dla konta właściciela. Dane sprzedawców pozostają rozdzielone istniejącym polem `owner`.
 
-**Konfiguracja Stripe nie została jeszcze dodana. Płatności są wyłączone.** Aktualny hosting pozostaje prywatny dla właściciela, więc Stripe nie ma dostępu do webhooka. Przed uruchomieniem sprzedaży trzeba zakończyć konfigurację i sprawdzić sandbox na publicznie osiągalnym HTTPS. Nie wystarczy podłączyć Stripe do rozmowy: Worker potrzebuje własnego klucza i sekretu endpointu.
+**Produkt, cena 29,90 PLN miesięcznie, Customer Portal i endpoint webhooka są już utworzone w wybranym New business sandbox.** Ich identyfikatory i sekret podpisu webhooka są ustawione w hostingu. Nadal brakuje ograniczonego klucza API aplikacji. Właściciel może dodać go bezpośrednio w Ustawieniach → Abonament albo na `/abonament`. Aktualny hosting pozostaje prywatny dla właściciela, więc Stripe nie ma dostępu do webhooka. Przed uruchomieniem sprzedaży trzeba zakończyć konfigurację i sprawdzić sandbox na publicznie osiągalnym HTTPS. Połączenie Stripe z rozmową pozwoliło przygotować zasoby sandboxa. Worker korzysta z własnego klucza API, niezależnie od tego połączenia.
+
+## Bezpieczne dodanie klucza w panelu
+
+Formularz jest widoczny tylko dla użytkownika o `VP_BILLING_OWNER_ID`; serwer sprawdza ten identyfikator przed odczytem danych wejściowych i ponownie przed zapisem. Żądania spoza kanonicznego originu są odrzucane. Pole przyjmuje wyłącznie ograniczony klucz `rk_test_…`/`rk_live_…` zgodny z aktualnym trybem, sprawdza go przez odczyt skonfigurowanej ceny 2990 PLN-groszy i dopiero potem zapisuje. Ten test potwierdza poprawność klucza, konto i uprawnienie Prices: Read; pozostałe uprawnienia trzeba potwierdzić pełnym zakupem w sandboxie.
+
+Klucz jest szyfrowany AES-256-GCM z losowym nonce 12 bajtów i powiązaniem do trybu. D1 przechowuje wyłącznie szyfrogram w `vp_billing_keys`; osobny 32-bajtowy sekret `VP_BILLING_KEYRING_SECRET` znajduje się w sekretach hostingu. Formularz, odpowiedzi API i logi nigdy nie zwracają zapisanego klucza. Niepoprawny klucz lub awaria walidacji nie nadpisują poprzedniego połączenia. Rekordy test/live są oddzielne i przypisane do identyfikatora właściciela.
+
+`STRIPE_SECRET_KEY` z sekretów hostingu ma pierwszeństwo przed kluczem zapisanym w panelu. W takim przypadku formularz informuje o zarządzaniu z hostingu i blokuje zapis. Sekret szyfrowania jest trwały: nie rotuj go bez migracji i ponownego zaszyfrowania rekordów. Zgubienie go wymaga ponownego dodania klucza Stripe przez właściciela.
 
 ## 1. Sandbox i produkt
 
@@ -30,7 +38,8 @@ Ustaw wartości w sekretach hostingu Sites, nigdy w kodzie, przeglądarce, repoz
 | Nazwa | Wartość |
 | --- | --- |
 | `STRIPE_MODE` | `test`, później osobno `live` |
-| `STRIPE_SECRET_KEY` | Preferowany restricted API key `rk_…`, zgodny z trybem |
+| `STRIPE_SECRET_KEY` | Opcjonalny restricted API key `rk_…`, zgodny z trybem; alternatywnie dodaj klucz przez formularz właściciela |
+| `VP_BILLING_KEYRING_SECRET` | Losowy sekret szyfrowania 32 bajty / 64 znaki hex; ustawiony w sekretach hostingu, nigdy w repozytorium |
 | `STRIPE_PRICE_ID` | ID ceny 2990 groszy / PLN / miesiąc |
 | `STRIPE_WEBHOOK_SECRET` | Sekret podpisu konkretnego endpointu `whsec_…` |
 | `VP_APP_ORIGIN` | Kanoniczny adres HTTPS witryny, bez ścieżki |
@@ -39,7 +48,7 @@ Ustaw wartości w sekretach hostingu Sites, nigdy w kodzie, przeglądarce, repoz
 
 W produkcji skonfigurowano już `VP_APP_ORIGIN`, `STRIPE_MODE=test` i identyfikator istniejącego właściciela na podstawie jego rekordu w bazie. Nie wpisuj przykładowego ID w miejsce rzeczywistego. W lokalnym trybie Windows identyfikator podaje `build/sites-vite-plugin.ts`; lokalny wyjątek ustaw tylko w ignorowanym `.dev.vars`.
 
-Klucz ograniczony potrzebuje odczytu cen/subskrypcji/faktur, odczytu i zapisu klientów i Checkout Sessions oraz tworzenia sesji Customer Portal. Potwierdź uprawnienia testem integracji; nie nadawaj prawa do wypłat, przelewów ani zwrotów, których aplikacja nie wykonuje. Zmiana sekretów wymaga ponownego wdrożenia.
+Klucz ograniczony potrzebuje odczytu cen/subskrypcji/faktur, odczytu i zapisu klientów i Checkout Sessions oraz tworzenia sesji Customer Portal. Potwierdź uprawnienia testem integracji; nie nadawaj prawa do wypłat, przelewów ani zwrotów, których aplikacja nie wykonuje. Zmiana sekretów hostingu wymaga ponownego wdrożenia. Klucz zapisany przez formularz panelu jest używany od razu, bez kolejnego wdrożenia.
 
 ## 4. Webhook
 

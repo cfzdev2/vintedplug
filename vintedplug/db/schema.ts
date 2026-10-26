@@ -34,3 +34,6 @@ export const billing=sqliteTable("vp_billing",{
 export const billingEvents=sqliteTable("vp_billing_events",{
  id:text("id").primaryKey(),type:text("type").notNull(),processedAt:text("processed_at").notNull(),
 });
+export const billingKeys=sqliteTable("vp_billing_keys",{
+ mode:text("mode").primaryKey(),owner:text("owner").notNull(),ciphertext:text("ciphertext").notNull(),updatedAt:text("updated_at").notNull(),
+});

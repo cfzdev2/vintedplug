@@ -210,3 +210,12 @@ Pakiet Stripe 23.0.0, API 2026-09-30.endive, fetch i WebCrypto dla Cloudflare. W
 **Pozostała konfiguracja zewnętrzna:** nie ma jeszcze ceny, klucza aplikacji i sekretu webhooka w runtime. Pełnego zakupu w sandboxie ani rzeczywistego naliczenia nie wykonano. Stripe został dodany do rozmowy, ale jego operacje nie były widoczne w rejestrze narzędzi tej sesji. Hosting pozostaje prywatny, co blokuje zewnętrzne webhooki; przed sprzedażą potrzebna jest świadoma zmiana na publicznie osiągalny hosting z zachowaniem ochrony danych przez aplikację. Nie uruchamiano live. Pełne zwroty i spory wymagają ręcznego zakończenia subskrypcji w Stripe; sam zwrot nie cofa dostępu automatycznie. Szczegóły uruchomienia: `docs/stripe-setup.md`.
 
 W lokalnej wersji Windows `02-uruchom.cmd` uruchamia przygotowanie bazy przed startem. Portable setup dodaje lokalny wyjątek abonamentu dla `local_vintedplug` wyłącznie do ignorowanego `.dev.vars`; produkcja używa osobnej konfiguracji i identyfikatora.
+
+
+## Bezpieczne połączenie Stripe z panelu — 26 października 2026
+
+Produkt, cena 29,90 PLN/mies., konfiguracja Customer Portal i webhook zostały utworzone w wybranym przez użytkownika New business sandbox przez dostępne już narzędzia Stripe. Identyfikatory zasobów i sekret podpisu webhooka są skonfigurowane w runtime. Realne naliczanie pozostaje wyłączone, witryna pozostaje prywatna, a zakup end-to-end w sandboxie wciąż czeka na klucz aplikacji i osiągalny webhook.
+
+Dodano formularz klucza na karcie Abonament, widoczny tylko dla właściciela. POST `/api/billing/setup` wymaga uwierzytelnienia, identyfikatora właściciela, poprawnego Origin i ograniczonego klucza zgodnego z trybem. Przed zapisem sprawdza odczyt istniejącej ceny w Stripe. Zapis AES-256-GCM z losowym nonce, AAD zależnym od trybu, w nowej tabeli `vp_billing_keys` (migracja 0004). Sekret szyfrowania jest oddzielnym sekretem hostingu; klucz Stripe nie trafia do kodu, odpowiedzi, logów ani tekstu jawnego w bazie. Konfiguracja `STRIPE_SECRET_KEY` w runtime zachowuje pierwszeństwo.
+
+99 testów przechodzi, w tym testy rzeczywistego SQLite i WebCrypto: separacja właścicieli/trybów, losowość szyfrogramu, wykrycie manipulacji, zły sekret, ochrona przed zapisem przez obcą osobę, odrzucanie pełnego i niewłaściwego trybu klucza oraz zachowanie poprzedniego połączenia po błędzie walidacji. Formularz jest testowany na tymczasowym widoku lokalnym; żaden prawdziwy klucz użytkownika nie został w nim wpisany ani zapisany.

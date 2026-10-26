@@ -8,6 +8,7 @@ declare namespace Cloudflare {
     PHOTOROOM_API_KEY?: string;
     VP_GUIDE_AUTHOR_EMAIL?: string;
     VP_BILLING_OWNER_ID?: string;
+    VP_BILLING_KEYRING_SECRET?: string;
     VP_APP_ORIGIN?: string;
     STRIPE_SECRET_KEY?: string;
     STRIPE_PRICE_ID?: string;
