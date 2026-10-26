@@ -9,3 +9,14 @@ GEMINI_TEXT_MODEL="gemini-3.5-flash-lite"
 # Lokalne usuwanie tła działa bez klucza. Photoroom jest opcjonalny i wyłączony.
 # PHOTOROOM_API_KEY=""
 # Ustaw IMAGE_AI_ENABLED="true" dopiero po dodaniu klucza i sprawdzeniu kredytów.
+
+# Abonament vintedplug: 29,90 PLN / mies. Klucze tylko w sekretach serwera.
+# Preferowany klucz ograniczony (rk_), osobny dla test/live.
+STRIPE_MODE=test
+STRIPE_SECRET_KEY=
+STRIPE_PRICE_ID=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PORTAL_CONFIGURATION_ID=
+VP_APP_ORIGIN=
+# Stabilny identyfikator uwierzytelnionego właściciela witryny, nie adres e-mail.
+VP_BILLING_OWNER_ID=local_vintedplug

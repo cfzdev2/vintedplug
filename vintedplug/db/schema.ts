@@ -22,3 +22,15 @@ export const aiUsage=sqliteTable("vp_ai_usage",{id:text("id").primaryKey(),owner
 export const earningGuides=sqliteTable("vp_earning_guides",{
  id:text("id").primaryKey(),owner:text("owner").notNull(),chapters:text("chapters",{mode:"json"}).$type<GuideChapter[]>().notNull(),revision:integer("revision").notNull().default(1),updatedAt:text("updated_at").notNull(),
 });
+export const billing=sqliteTable("vp_billing",{
+ id:text("id").primaryKey(),owner:text("owner").notNull(),mode:text("mode").notNull(),
+ customerId:text("customer_id").unique(),subscriptionId:text("subscription_id").unique(),
+ status:text("status").notNull().default("inactive"),priceId:text("price_id"),
+ paidUntil:integer("paid_until").notNull().default(0),periodEnd:integer("period_end").notNull().default(0),
+ cancelAt:integer("cancel_at").notNull().default(0),cancelAtPeriodEnd:integer("cancel_at_period_end").notNull().default(0),
+ checkoutId:text("checkout_id"),checkoutAttempt:text("checkout_attempt"),
+ leaseToken:text("lease_token"),leaseUntil:integer("lease_until").notNull().default(0),updatedAt:text("updated_at").notNull(),
+},t=>[index("vp_billing_owner_mode").on(t.owner,t.mode)]);
+export const billingEvents=sqliteTable("vp_billing_events",{
+ id:text("id").primaryKey(),type:text("type").notNull(),processedAt:text("processed_at").notNull(),
+});

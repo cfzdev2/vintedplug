@@ -8,10 +8,12 @@ import {EARNING_GUIDE_ID,canEditEarningGuide} from "./guide-access";
 import {normalizeGuideChapters} from "./earning-guide";
 import {textAIConfig} from "./ai-text";
 import {imageAIConfig} from "./ai-image";
+import {paidUserId} from "./billing-server";
+import {BillingError} from "./billing-policy";
 export class HttpError extends Error{constructor(public status:number,message:string){super(message);}}
-export async function owner(){const u=await getChatGPTUser();if(!u)throw new HttpError(401,"Zaloguj się, aby korzystać z panelu.");return u.userId;}
+export async function owner(){return paidUserId();}
 export function apiError(e:unknown){
- if(e instanceof HttpError)return Response.json({error:e.message},{status:e.status});
+ if(e instanceof HttpError||e instanceof BillingError)return Response.json({error:e.message},{status:e.status,headers:{"Cache-Control":"no-store"}});
  if(e instanceof ZodError)return Response.json({error:e.issues[0]?.message??"Sprawdź wpisane dane."},{status:400});
  console.error("vintedplug request failed",e instanceof Error?e.name:"unknown");
  return Response.json({error:"Nie udało się wykonać operacji. Spróbuj ponownie."},{status:500});

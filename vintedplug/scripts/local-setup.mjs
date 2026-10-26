@@ -2,6 +2,7 @@ import {existsSync,readFileSync,writeFileSync} from "node:fs";
 import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
 import path from "node:path";
+import {readExecutionProfile} from "./execution-profile.mjs";
 
 const root=fileURLToPath(new URL("../",import.meta.url));
 process.chdir(root);
@@ -19,6 +20,14 @@ const variables=path.join(root,".dev.vars");
 if(!existsSync(variables)){
  writeFileSync(variables,readFileSync(path.join(root,".dev.vars.example")),{flag:"wx"});
  console.log("Utworzono lokalne ustawienia .dev.vars.");
+}
+// Portable development authenticates only on loopback as local_vintedplug.
+// This edits ignored local configuration; hosted access uses its own stable ID.
+if(readExecutionProfile()==="portable"){
+ const local=readFileSync(variables,"utf8");
+ if(!/^VP_BILLING_OWNER_ID\s*=\s*["']?[^\s"'\r\n]+/m.test(local)){
+  writeFileSync(variables,local.replace(/^VP_BILLING_OWNER_ID\s*=.*$/gm,"").trimEnd()+"\nVP_BILLING_OWNER_ID=local_vintedplug\n");
+ }
 }
 console.log("Przygotowanie bazy danych na tym komputerze...");
 const result=spawnSync(process.execPath,["--import","./scripts/sites-env.mjs",cli,
