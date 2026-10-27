@@ -27,7 +27,12 @@ export function subscriptionPatch(sub: Stripe.Subscription|null, row: BillingRec
   let paidUntil = sub.id === row.subscription_id ? row.paid_until : 0;
   const invoice = typeof sub.latest_invoice === "object" ? sub.latest_invoice : null;
   if (planOK && invoice?.status === "paid" && invoice.currency === "pln" && invoice.amount_paid >= MONTHLY_PRICE && !invoice.lines.has_more) {
-    const line = invoice.lines.data.find(l => objectId(l.subscription) === sub.id && objectId(l.pricing?.price_details?.price) === config.priceId && l.quantity === 1 && l.amount >= MONTHLY_PRICE);
+    // Endive links a recurring invoice line through parent, not the legacy
+    // top-level subscription field. Bind both the subscription and its item.
+    const line = invoice.lines.data.find(l => l.parent?.type === "subscription_item_details" &&
+      objectId(l.parent.subscription_item_details?.subscription) === sub.id &&
+      l.parent.subscription_item_details?.subscription_item === item.id &&
+      objectId(l.pricing?.price_details?.price) === config.priceId && l.quantity === 1 && l.amount >= MONTHLY_PRICE);
     if (line && Number.isSafeInteger(line.period.end)) paidUntil = Math.max(paidUntil, Math.min(line.period.end,item.current_period_end));
   }
   const status = !planOK ? "invalid_plan" : sub.pause_collection ? "paused" : sub.status;

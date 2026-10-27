@@ -18,7 +18,7 @@ function setup(){
 }
 function subscription(owner='alice',overrides={}){
  const end=now()+86400;
- return {id:'sub_alice',customer:'cus_alice',created:now(),status:'active',livemode:false,pause_collection:null,cancel_at:null,cancel_at_period_end:false,metadata:{vp_app:'vintedplug',vp_owner:owner},items:{data:[{quantity:1,price:{...price},current_period_end:end}],has_more:false},latest_invoice:{id:'in_alice',status:'paid',currency:'pln',amount_paid:2990,lines:{has_more:false,data:[{subscription:'sub_alice',quantity:1,amount:2990,pricing:{price_details:{price:config.priceId}},period:{end}}]}},...overrides};
+ return {id:'sub_alice',customer:'cus_alice',created:now(),status:'active',livemode:false,pause_collection:null,cancel_at:null,cancel_at_period_end:false,metadata:{vp_app:'vintedplug',vp_owner:owner},items:{data:[{id:'si_alice',quantity:1,price:{...price},current_period_end:end}],has_more:false},latest_invoice:{id:'in_alice',status:'paid',currency:'pln',amount_paid:2990,lines:{has_more:false,data:[{parent:{type:'subscription_item_details',subscription_item_details:{subscription:'sub_alice',subscription_item:'si_alice'}},quantity:1,amount:2990,pricing:{price_details:{price:config.priceId}},period:{end}}]}},...overrides};
 }
 async function bound(store,owner='alice',customer='cus_alice'){
  const row=await store.lock(owner,'test');const updated=await store.write(row,{customer_id:customer});await store.release(updated);return updated;
@@ -46,6 +46,22 @@ test('dostęp wynika z opłaconego okresu; rezygnacja nie skraca go, a brak odno
  const changed=subscription();changed.items.data[0].price.unit_amount=100;assert.equal(subscriptionPatch(changed,{...row,...paid},config).paid_until,0);
  const canceled=subscriptionPatch(subscription('alice',{status:'canceled'}),{...row,...paid},config);assert(!subscriptionAccess({...row,...canceled}));
  for(const status of ['trialing','incomplete','unpaid','paused','incomplete_expired'])assert(!subscriptionAccess({...row,...paid,status}));
+});
+test('Endive: opłacona pozycja musi należeć do właściwej subskrypcji i jej elementu',async()=>{
+ const {store}=setup();const row=await bound(store);
+ const s=subscription();const line=s.latest_invoice.lines.data[0];
+ assert(!('subscription' in line));
+ assert(subscriptionAccess({...row,...subscriptionPatch(s,row,config)}));
+ for(const mutate of [
+  l=>{l.parent.subscription_item_details.subscription='sub_other';},
+  l=>{l.parent.subscription_item_details.subscription_item='si_other';},
+  l=>{l.parent.type='invoice_item_details';},
+  l=>{l.subscription='sub_alice';delete l.parent;},
+  l=>{l.pricing.price_details.price='price_other';},
+ ]){
+  const invalid=structuredClone(s);mutate(invalid.latest_invoice.lines.data[0]);
+  assert.equal(subscriptionPatch(invalid,row,config).paid_until,0);
+ }
 });
 test('SQLite: właściciele oraz tryby test/live mają osobne rekordy; lease chroni przed równoległym i spóźnionym zapisem',async()=>{
  const {store,sqlite}=setup();const a=await store.lock('alice','test');await assert.rejects(()=>store.lock('alice','test'),e=>e.status===409);
