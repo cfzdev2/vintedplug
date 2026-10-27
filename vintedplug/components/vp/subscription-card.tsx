@@ -12,14 +12,15 @@ async function request<T>(path:string,data?:Record<string,unknown>):Promise<T>{
 }
 export function SubscriptionCard({initial,standalone=false}:{initial:BillingView;standalone?:boolean}){
  const [state,setState]=useState(initial),[busy,setBusy]=useState<string|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState(""),once=useRef(false);
- async function refresh(sessionId?:string){setBusy("sync");setError("");try{
+ async function refresh(sessionId?:string,enterPanel=false){setBusy("sync");setError("");try{
   const next=state.configured?await request<BillingView>("/api/billing/sync",sessionId?{sessionId}:{}):await request<BillingView>("/api/billing");setState(next);
+  if(enterPanel&&next.access){window.location.replace("/panel");return;}
   setNotice(next.access?"Dostęp jest aktywny. Możesz otworzyć panel.":"Płatność nie została jeszcze potwierdzona. Jeśli została wykonana, sprawdź status ponownie za chwilę.");
  }catch(e){setError(e instanceof Error?e.message:"Nie udało się sprawdzić abonamentu.");}finally{setBusy(null);}}
  useEffect(()=>{if(!standalone||once.current)return;once.current=true;const q=new URLSearchParams(window.location.search);
   if(q.get("billing")==="canceled")setNotice("Płatność została przerwana. Możesz wrócić do zakupu w dowolnej chwili.");
   if(q.get("billing")==="success"){
-   setNotice("Sprawdzamy potwierdzenie płatności w Stripe…");const id=q.get("session_id");void refresh(id??undefined);
+   setNotice("Sprawdzamy potwierdzenie płatności w Stripe…");const id=q.get("session_id");void refresh(id??undefined,true);
   }
   if(q.has("billing")||q.has("session_id"))window.history.replaceState(null,"",window.location.pathname);
  // Reconcile once on return. A query parameter alone never changes access.
@@ -48,7 +49,7 @@ export function SubscriptionCard({initial,standalone=false}:{initial:BillingView
    {state.canCheckout&&<button className="btn primary" disabled={!!busy} onClick={()=>open("checkout")}>{busy==="checkout"?<LoaderCircle className="spin" size={17}/>:<CreditCard size={17}/>}Kup dostęp · 29,90 zł / mies.</button>}
    {!state.owner&&state.hasCustomer&&state.configured&&<button className="btn secondary" disabled={!!busy} onClick={()=>open("portal")}>{busy==="portal"?<LoaderCircle className="spin" size={16}/>:<ExternalLink size={16}/>}Zarządzaj abonamentem</button>}
    {!state.owner&&<button className="text-button" disabled={!!busy} onClick={()=>refresh()}><RefreshCw size={15} className={busy==="sync"?"spin":""}/>Sprawdź status płatności</button>}
-   {standalone&&state.access&&<a className="btn primary" href="/" target="_top">Otwórz panel<ArrowRight size={17}/></a>}
+   {standalone&&state.access&&<a className="btn primary" href="/panel" target="_top">Otwórz panel<ArrowRight size={17}/></a>}
    {!standalone&&<a className="text-button" href="/abonament" target="_top">Szczegóły abonamentu<ArrowRight size={15}/></a>}
   </div>
   {!state.owner&&<p className="subscription-fineprint">Opłata odnawia się co miesiąc. Możesz zrezygnować z kolejnego odnowienia w ustawieniach abonamentu. Po wygaśnięciu dostęp do funkcji zostanie zablokowany, a Twoje dane pozostaną zapisane.</p>}

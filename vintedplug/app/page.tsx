@@ -1,14 +1,10 @@
-import {requireChatGPTUser,chatGPTSignOutPath} from "./chatgpt-auth";
-import {snapshot} from "@/lib/server";
-import {Panel} from "@/components/vp/panel";
-import type {Workspace} from "@/lib/domain";
-import {billingStatus} from "@/lib/billing-server";
-import {redirect} from "next/navigation";
-export const dynamic="force-dynamic";
-export default async function Home(){
- const user=await requireChatGPTUser("/");
- const billing=await billingStatus(user.userId);
- if(!billing.access)redirect("/abonament");
- const data=await snapshot(user.userId) as Workspace;
- return <Panel initial={data} billing={billing} displayName={user.fullName??"Sprzedawca"} email={user.email} signOutHref={chatGPTSignOutPath("/")}/>;
-}
+import {LandingPage} from "@/components/vp/landing-page";
+import type {Metadata} from "next";
+import "./landing.css";
+
+export const metadata:Metadata={
+ title:"vintedplug — Mniej chaosu. Więcej kontroli nad sprzedażą.",
+ description:"Magazyn, finanse kont sprzedażowych, opisy AI i studio zdjęć. Przygotuj ogłoszenia na Vinted i śledź zysk w jednym panelu. 29,90 zł miesięcznie.",
+ openGraph:{title:"vintedplug — Twoje rzeczy. Twój zysk. Mniej chaosu.",description:"Jedna przestrzeń do przygotowania ogłoszeń i śledzenia zarobków ze sprzedaży.",locale:"pl_PL",type:"website"},
+};
+export default function Home(){return <LandingPage/>;}
