@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v3";
 import type {Item} from "./domain";
 
 export const KEYWORDS_MAX_LENGTH=500;

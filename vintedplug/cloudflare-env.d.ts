@@ -1,5 +1,9 @@
 declare namespace Cloudflare {
   interface Env {
+    VP_AUTH_MODE?: "sites" | "standalone";
+    BETTER_AUTH_SECRET?: string;
+    RESEND_API_KEY?: string;
+    AUTH_EMAIL_FROM?: string;
     DB?: D1Database;
     BUCKET?: R2Bucket;
     GEMINI_API_KEY?: string;

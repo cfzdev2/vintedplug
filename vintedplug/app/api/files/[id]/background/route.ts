@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v3";
 import {owner,body,apiError} from "@/lib/server";
 import {prepareBackground} from "@/lib/server-image";
 export const dynamic="force-dynamic";

@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "vintedplug",
+  "main": "./deploy/cloudflare/worker.ts",
+  "compatibility_date": "2026-10-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "vintedplug",
+    "migrations_dir": "drizzle"
+  }],
+  "r2_buckets": [{"binding": "BUCKET", "bucket_name": "vintedplug-photos"}],
+  "vars": {"VP_AUTH_MODE": "standalone", "STRIPE_MODE": "test"},
+  "observability": {"enabled": false}
+}

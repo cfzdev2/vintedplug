@@ -1,5 +1,5 @@
 import {and,eq} from "drizzle-orm";
-import {z} from "zod";
+import {z} from "zod/v3";
 import {getDb} from "@/db";
 import {accounts,items,expenses} from "@/db/schema";
 import {accountInput,itemInput,expenseInput,itemStatusIssue} from "@/lib/domain";

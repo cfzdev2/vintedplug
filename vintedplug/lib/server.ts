@@ -2,8 +2,8 @@ import {env} from "cloudflare:workers";
 import {and,eq,desc} from "drizzle-orm";
 import {getDb} from "@/db";
 import {accounts,items,expenses,uploads,earningGuides} from "@/db/schema";
-import {getChatGPTUser} from "@/app/chatgpt-auth";
-import {ZodError} from "zod";
+import {getCurrentUser} from "./identity";
+import {ZodError} from "zod/v3";
 import {EARNING_GUIDE_ID,canEditEarningGuide} from "./guide-access";
 import {normalizeGuideChapters} from "./earning-guide";
 import {textAIConfig} from "./ai-text";
@@ -30,7 +30,7 @@ export async function ownItem(uid:string,id:string){const i=await getDb().select
 export async function ownUpload(uid:string,id:string){const f=await getDb().select().from(uploads).where(and(eq(uploads.owner,uid),eq(uploads.id,id))).get();if(!f)throw new HttpError(404,"Nie znaleziono zdjęcia.");return f;}
 export async function guideEditPermission(uid:string,boundOwner:string|undefined){
  if(boundOwner)return canEditEarningGuide(uid,boundOwner,"",undefined);
- const user=await getChatGPTUser();
+ const user=await getCurrentUser();
  return !!user&&user.userId===uid&&canEditEarningGuide(uid,undefined,user.email,env.VP_GUIDE_AUTHOR_EMAIL);
 }
 export async function snapshot(uid:string){

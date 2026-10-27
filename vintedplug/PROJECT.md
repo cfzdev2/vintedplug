@@ -235,3 +235,12 @@ Na prośbę użytkownika przygotowano publiczną stronę promocyjną pod `/`, a 
 Przeglądarką sprawdzono desktop, viewport telefonu 390 px bez przewijania w bok oraz interakcje. Dwa kontrolowane stany odpowiedzi serwera w lokalnym, usuniętym widoku QA potwierdzają pozostanie przy nieopłaconym dostępie i przekierowanie przy potwierdzonym. Clipboard w lokalnym HTTP może być zablokowany i ma komunikat z instrukcją ręcznego kopiowania. Wszystkie 100 testów przechodzi. Niezależne uwierzytelnianie i własna domena są uzgodnionym kolejnym etapem; na tej stronie obecny ChatGPT i sandbox są opisane wprost. Szczegóły: `docs/landing.md`.
 
 Uzupełniono pominiętą promocję autorskich metod: osobna sekcja „Moje metody” przed narzędziami, link w nawigacji i hero, wzmianka w cenniku i FAQ. Trzy tematy odpowiadają bazie wiedzy, z pozyskiwaniem towaru jako pierwszą wyróżnioną metodą. Odczyt tabeli poradnika potwierdził brak zapisanych treści autora, więc promocja jawnie oznacza materiały jako przygotowywane i nie przedstawia pustych rozdziałów jako gotowych instrukcji.
+
+
+## Własne logowanie i osobny build — 27 października 2026
+
+Przygotowano rejestrację e-mail/hasło, weryfikację adresu, logowanie, reset i wylogowanie przez Better Auth + D1. Wspólny adapter tożsamości zachowuje obecne ograniczenia danych i abonamentu. Osobny entrypoint Workers usuwa tożsamość platformy; mapowanie auth_user_id → owner zachowuje możliwość kontrolowanego przeniesienia danych i metadanych Stripe bez łączenia kont po e-mailu. Migracja 0005 dodaje tabele auth bez zmiany tabel biznesowych.
+
+Osobny `vite.standalone.config.ts` i `wrangler.standalone.jsonc` budują wersję bez pluginów Sites. Dotychczasowe wdrożenie pozostaje w trybie sites i nadal korzysta z ChatGPT; nowe formularze są tam nieaktywne. Nie połączono konta Cloudflare, domeny ani Resend, nie wykonano migracji danych i nie uruchomiono płatności live. `wrangler whoami` potwierdził brak zalogowanego konta w tym środowisku. Kod jest przygotowany, a niezależny serwis wymaga jeszcze konfiguracji i testu na infrastrukturze właściciela.
+
+108 testów przechodzi, w tym rzeczywisty Better Auth, weryfikacja, reset, cookies, sesje, CSRF, mapowanie i atomowe limity. Build standalone przechodzi. Instrukcja uruchomienia, migracji, sekrety i ograniczenia audytu są opisane w `docs/standalone.md`. Wersja Better Auth 1.7.12 zachowuje istniejącą politykę minimalnego wieku pakietów; nie obniżano jej dla nowszego wydania.

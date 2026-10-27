@@ -29,7 +29,7 @@ function DashboardPreview(){
  </div>;
 }
 
-export function LandingPage(){
+export function LandingPage({independent=false}:{independent?:boolean}){
  const [length,setLength]=useState<"short"|"detailed">("short"),[copied,setCopied]=useState(false),[copyError,setCopyError]=useState(false),[background,setBackground]=useState("light-oak");
  async function copy(){try{await navigator.clipboard.writeText(descriptions[length]);setCopied(true);setCopyError(false);}catch{setCopyError(true);}}
  return <div className="lp">
@@ -69,7 +69,7 @@ export function LandingPage(){
    <section className="lp-faq lp-container"><div><span className="lp-eyebrow">DOBRZE WIEDZIEĆ</span><h2>Jeszcze kilka<br/>konkretów.</h2></div><div className="lp-faq-list">{[
     ["Czy vintedplug wystawia rzeczy za mnie?","Nie. Panel pomaga przygotować treść i zdjęcia oraz uporządkować sprzedaż. Gotowe materiały przenosisz samodzielnie na Vinted. Nie podajesz nam hasła do swojego konta Vinted."],
     ["Co znajdę w sekcji „Moje metody”?","Trzy autorskie tematy: pozyskiwanie towaru, przygotowanie i sprawdzanie ogłoszeń oraz działanie po banie. Pełne instrukcje i przykłady są w przygotowaniu i pojawią się w bazie wiedzy po uzupełnieniu przez autora."],
-    ["Jak uzyskam dostęp po zakupie?","Kliknij „Kup dostęp”, zaloguj się i opłać abonament w Stripe. Po potwierdzeniu płatności otworzy się Twój panel. W obecnej wersji logowanie odbywa się przez konto ChatGPT."],
+    ["Jak uzyskam dostęp po zakupie?","Kliknij „Kup dostęp”, zaloguj się i opłać abonament w Stripe. Po potwierdzeniu płatności otworzy się Twój panel. "+(independent?"Logowanie odbywa się przez Twoje konto vintedplug: e-mail i hasło.":"W obecnej wersji logowanie odbywa się przez konto ChatGPT.")],
     ["Czy mogę zrezygnować z odnowienia?","Tak. W ustawieniach abonamentu otworzysz panel Stripe i wyłączysz kolejną opłatę. Dostęp pozostanie aktywny do końca już opłaconego okresu, a zapisane dane nie zostaną automatycznie usunięte."],
     ["Czy muszę dodawać słowa kluczowe do AI?","Nie. Słowa kluczowe i dodatkowe cechy są opcjonalne. Pomagają doprecyzować wynik. Każdy wygenerowany opis sprawdź przed publikacją, szczególnie informacje o stanie i cechach rzeczy."],
     ["Czy mogę śledzić więcej niż jedno konto?","Tak. Możesz dodać osobne konta sprzedażowe, przypisać do nich rzeczy i wydatki oraz przeglądać ich finanse. To organizacja danych w panelu — bez automatycznego połączenia z kontami Vinted."]

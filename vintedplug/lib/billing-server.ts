@@ -1,12 +1,12 @@
 import {env} from "cloudflare:workers";
-import {getChatGPTUser} from "@/app/chatgpt-auth";
+import {getCurrentUser} from "./identity";
 import {BillingStore} from "./billing-store";
 import {BillingService,billingConfig} from "./billing-service";
 import {BillingError,billingView,assertPanelAccess,type BillingMode} from "./billing-policy";
 import {BillingKeyStore,openBillingKey} from "./billing-keys";
 
 export async function billingUser() {
-  const user=await getChatGPTUser();
+  const user=await getCurrentUser();
   if(!user)throw new BillingError(401,"Zaloguj się, aby korzystać z panelu.");
   return user;
 }

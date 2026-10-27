@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v3";
 import type {EarningGuide} from "./earning-guide";
 export const STATUSES={draft:"Szkic",listed:"Wystawione",sold:"Sprzedane",returned:"Zwrot"} as const;
 export type Status=keyof typeof STATUSES;

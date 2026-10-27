@@ -14,13 +14,18 @@
     "db:generate": "drizzle-kit generate",
     "local:setup": "node scripts/local-setup.mjs",
     "typecheck": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
-    "test": "node --experimental-strip-types --test tests/finance.test.mjs tests/guide.test.mjs tests/ai-text.test.mjs tests/photos.test.mjs tests/ai-image.test.mjs tests/local-background.test.mjs tests/photo-batch.test.mjs tests/photo-zip.test.mjs tests/billing.test.mjs tests/billing-keys.test.mjs"
+    "test": "node --experimental-strip-types --test tests/finance.test.mjs tests/guide.test.mjs tests/ai-text.test.mjs tests/photos.test.mjs tests/ai-image.test.mjs tests/local-background.test.mjs tests/photo-batch.test.mjs tests/photo-zip.test.mjs tests/billing.test.mjs tests/billing-keys.test.mjs tests/auth.test.mjs",
+    "standalone:dev": "node scripts/standalone.mjs dev",
+    "standalone:build": "node scripts/standalone.mjs build",
+    "standalone:check": "node scripts/standalone.mjs check-deploy"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
+    "@better-auth/drizzle-adapter": "1.7.12",
     "@hookform/resolvers": "^5.7.1",
     "@huggingface/transformers": "4.3.1",
     "@shadcn/react": "^0.3.0",
+    "better-auth": "1.7.12",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "^1.1.1",
@@ -43,7 +48,7 @@
     "stripe": "23.0.0",
     "tailwind-merge": "3.6.0",
     "vaul": "^1.1.2",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

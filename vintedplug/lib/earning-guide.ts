@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v3";
 
 export const CHAPTER_IDS=["setup","recommendations","method","opportunity","selling","results"] as const;
 export type ChapterId=typeof CHAPTER_IDS[number];
