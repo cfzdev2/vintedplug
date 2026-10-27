@@ -10,6 +10,8 @@
 
 Strona zachowuje białe tło, akcenty teal, logo i favicon projektu. Pokazuje interaktywny podgląd kont/magazynu/finansów, dwa przykładowe opisy do kopiowania, wybór czterech istniejących teł, przebieg pracy, cennik i FAQ. Wszystkie liczby, ubrania i teksty demonstracyjne są oznaczone; nie pochodzą z prywatnego panelu. Przełączanie przykładów nie wywołuje AI ani nie zapisuje danych.
 
+Autorska sekcja „Moje metody” znajduje się przed opisem narzędzi. Linki prowadzą do niej z nawigacji, hero i cennika; FAQ opisuje trzy tematy: pozyskiwanie towaru, przygotowanie i sprawdzanie ogłoszeń oraz działanie po banie. Pozyskiwanie towaru jest pierwsze i wyróżnione ciemnym tłem. W chwili publikacji odczyt `vp_earning_guides` potwierdził brak zapisanych rozdziałów autora, dlatego przy sekcji i cenniku widnieje informacja „w przygotowaniu”. Po uzupełnieniu materiałów zaktualizuj ten status w treści strony i FAQ.
+
 ## Obecny etap
 
 Hosting pozostaje publiczny, Stripe w trybie testowym, logowanie przez ChatGPT. Cennik wyraźnie oznacza testową płatność; FAQ opisuje aktualny sposób logowania. Opisy produktu nie obiecują automatycznego wystawiania ani połączenia z Vinted. Opcjonalny Photoroom jest wyłączony z ceny abonamentu. Nie dodano fikcyjnych opinii ani wyników sprzedaży.
