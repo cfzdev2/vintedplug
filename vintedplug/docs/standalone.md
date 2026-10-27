@@ -1,6 +1,8 @@
 # Samodzielny vintedplug
 
-Stan: 27 października 2026. Kod i build samodzielnego serwisu są przygotowane; nie utworzono jeszcze infrastruktury na koncie właściciela, nie połączono domeny i nie wysłano rzeczywistych e-maili. Obecny hosting Sites nadal używa logowania przez ChatGPT. Płatności pozostają testowe.
+Stan: 27 października 2026. Kod i build samodzielnego serwisu są przygotowane; właściciel utworzył już bazę D1. Worker, R2, poczta i domena nie są jeszcze uruchomione. Nie wysłano rzeczywistych e-maili. Obecny hosting Sites nadal używa logowania przez ChatGPT. Płatności pozostają testowe.
+
+Aktualizacja konfiguracji: właściciel zalogował Wrangler na swoim komputerze i utworzył D1 `vintedplug` w WEUR. Na podstawie wyniku jego polecenia zapisano `database_id` w `wrangler.standalone.jsonc`; binding aplikacji pozostaje `DB`. Baza jest jeszcze pusta, nie zastosowano migracji ani nie przeniesiono danych. Autoryzacja wykonana na komputerze właściciela nie daje dostępu temu środowisku — jego połączenie OAuth z panelem Cloudflare zostało zablokowane przez politykę sieciową. Kolejne operacje na koncie wykonuje właściciel w swoim terminalu. R2, Worker, poczta i domena nadal czekają na uruchomienie.
 
 ## Dwa sposoby uruchamiania
 
