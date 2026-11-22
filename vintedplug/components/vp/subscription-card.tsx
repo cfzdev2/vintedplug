@@ -35,7 +35,7 @@ export function SubscriptionCard({initial,standalone=false}:{initial:BillingView
   <div className="subscription-header"><span className="subscription-icon"><CreditCard size={23}/></span><div><span className="eyebrow">TWÓJ ABONAMENT</span><h2>vintedplug</h2></div>{state.mode==="test"&&state.configured&&<span className="subscription-test">Tryb testowy</span>}</div>
   <div className="subscription-price">29,90 <span>zł / miesiąc</span></div>
   <p className="subscription-intro">Jedna przestrzeń do organizacji rzeczy, przygotowania ogłoszeń i śledzenia zarobków.</p>
-  <ul className="subscription-features">{["Magazyn i osobne finanse kont sprzedażowych","Tytuły, opisy i odpowiedzi AI · do 20 generacji dziennie","Lokalna obróbka zdjęć i gotowe tła","Baza wiedzy i eksport danych"].map(v=><li key={v}><Check size={16}/><span>{v}</span></li>)}</ul>
+  <ul className="subscription-features">{["Magazyn i osobne finanse kont sprzedażowych","Tytuły, opisy i odpowiedzi AI · do 20 generacji dziennie","Lokalna obróbka zdjęć i gotowe tła","Moje prywatne metody"].map(v=><li key={v}><Check size={16}/><span>{v}</span></li>)}</ul>
   <div className="subscription-details"><div><span>Status</span><strong>{labels[state.status]??"Do sprawdzenia"}</strong></div>
   {state.owner?<p>Jako właściciel masz dostęp bez opłacania abonamentu.</p>:<>
    {!!state.paidUntil&&<div><span>{state.access?"Dostęp opłacony do":"Ostatni opłacony okres do"}</span><strong>{date(state.paidUntil)}</strong></div>}
