@@ -32,7 +32,7 @@ export function SubscriptionCard({initial,standalone=false}:{initial:BillingView
   window.location.assign(url);
  }catch(e){setError(e instanceof Error?e.message:"Nie udało się otworzyć płatności.");setBusy(null);}}
  return <section className={`panel subscription-card ${standalone?"subscription-standalone":""}`} aria-busy={!!busy}>
-  <div className="subscription-header"><span className="subscription-icon"><CreditCard size={23}/></span><div><span className="eyebrow">TWÓJ ABONAMENT</span><h2>vintedplug</h2></div>{state.mode==="test"&&state.configured&&<span className="subscription-test">Tryb testowy</span>}</div>
+  <div className="subscription-header"><span className="subscription-icon"><CreditCard size={23}/></span><div><span className="eyebrow">TWÓJ ABONAMENT</span><h2>vintedplug</h2></div></div>
   <div className="subscription-price">29,90 <span>zł / miesiąc</span></div>
   <p className="subscription-intro">Jedna przestrzeń do organizacji rzeczy, przygotowania ogłoszeń i śledzenia zarobków.</p>
   <ul className="subscription-features">{["Magazyn i osobne finanse kont sprzedażowych","Tytuły, opisy i odpowiedzi AI · do 20 generacji dziennie","Lokalna obróbka zdjęć i gotowe tła","Moje prywatne metody"].map(v=><li key={v}><Check size={16}/><span>{v}</span></li>)}</ul>
