@@ -31,6 +31,10 @@ test('własne logowanie: konfiguracja fail-closed, bez przekierowań poza serwis
  assert.equal(authMode({}),'sites');assert.equal(authMode({VP_AUTH_MODE:'standalone'}),'standalone');assert.throws(()=>authMode({VP_AUTH_MODE:'invalid'}));
  const env={VP_AUTH_MODE:'standalone',VP_APP_ORIGIN:origin,BETTER_AUTH_SECRET:config.secret,RESEND_API_KEY:config.emailKey,AUTH_EMAIL_FROM:config.emailFrom};
  assert(standaloneAuthConfig(env));
+ assert.equal(standaloneAuthConfig({...env,RESEND_API_KEY:"  "+config.emailKey+" "}).emailKey,config.emailKey);
+ for(const [setting,value] of [["RESEND_API_KEY","invalid-private-value"],["AUTH_EMAIL_FROM","invalid-private-value"],["BETTER_AUTH_SECRET","invalid-private-value"]]){
+  assert.throws(()=>standaloneAuthConfig({...env,[setting]:value}),error=>error.setting===setting&&!error.message.includes(value));
+ }
  for(const patch of [{VP_APP_ORIGIN:'http://vintedplug.example.test'},{VP_APP_ORIGIN:'https://evil@vintedplug.example.test'},{VP_APP_ORIGIN:origin+'/panel'},{BETTER_AUTH_SECRET:'short'},{RESEND_API_KEY:''},{AUTH_EMAIL_FROM:'x\r\nBcc:attacker@example.test'}])assert.throws(()=>standaloneAuthConfig({...env,...patch}));
  assert(standaloneAuthConfig({...env,VP_APP_ORIGIN:'http://localhost:5173'},true));
  assert.throws(()=>standaloneAuthConfig({...env,VP_APP_ORIGIN:'http://localhost:5173'},false));
