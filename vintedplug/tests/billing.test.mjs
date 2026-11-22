@@ -36,6 +36,12 @@ test('abonament kosztuje dokładnie 2990 groszy miesięcznie; odrzuca inny plan,
  assert(billingConfig({STRIPE_MODE:'test',STRIPE_SECRET_KEY:config.key,STRIPE_PRICE_ID:config.priceId,STRIPE_WEBHOOK_SECRET:config.webhookSecret,VP_APP_ORIGIN:config.origin}));
  assert.equal(billingConfig({STRIPE_MODE:'live',STRIPE_SECRET_KEY:config.key,STRIPE_PRICE_ID:config.priceId,STRIPE_WEBHOOK_SECRET:config.webhookSecret,VP_APP_ORIGIN:config.origin}),null);
 });
+test('Worker bindings can be non-enumerable; report only the setting name when pasted credentials are malformed',()=>{
+ const fields={STRIPE_MODE:'test',STRIPE_SECRET_KEY:' '+config.key+'\r\n',STRIPE_PRICE_ID:config.priceId,STRIPE_WEBHOOK_SECRET:config.webhookSecret,VP_APP_ORIGIN:config.origin};
+ const read=(values,issues)=>billingConfig(Object.create(values),undefined,field=>issues.push(field));
+ const issues=[];assert.equal(read(fields,issues).key,config.key);assert.deepEqual(issues,[]);
+ for(const field of Object.keys(fields)){const errors=[];assert.equal(read({...fields,[field]:'bad input'},errors),null);assert.deepEqual(errors,[field]);}
+});
 test('dostęp wynika z opłaconego okresu; rezygnacja nie skraca go, a brak odnowienia nie wydłuża',async()=>{
  const {store}=setup();const row=await bound(store);const paid=subscriptionPatch(subscription(),row,config);
  assert(subscriptionAccess({...row,...paid}));

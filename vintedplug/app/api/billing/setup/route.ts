@@ -16,7 +16,7 @@ export async function POST(req:Request){try{
  if(!data||typeof data!=="object"||!("key" in data)||typeof data.key!=="string")throw new BillingError(400,"Wpisz ograniczony klucz Stripe.");
  const key=data.key.trim(),mode=env.STRIPE_MODE==="live"?"live":"test";
  await saveBillingKey({uid:user.userId,owner:env.VP_BILLING_OWNER_ID,mode,key,master:env.VP_BILLING_KEYRING_SECRET??"",store:billingKeyStore(),validate:async value=>{
-  const config=billingConfig({...env,STRIPE_SECRET_KEY:value});if(!config)throw new BillingError(503,"Dokończ konfigurację ceny i webhooka w hostingu.");
+  const config=billingConfig(env,value);if(!config)throw new BillingError(503,"Dokończ konfigurację ceny i webhooka w hostingu.");
   try{assertCheckoutPrice(await stripeClient(config).prices.retrieve(config.priceId),config.priceId,mode);}
   catch(e){if(e instanceof BillingError)throw e;throw new BillingError(400,"Stripe nie potwierdził klucza. Sprawdź konto, tryb testowy/produkcyjny i uprawnienie Prices: Read.");}
  }});

@@ -25,7 +25,7 @@ export async function currentBillingConfig(){
     const mode=env.STRIPE_MODE==="live"?"live":"test",stored=await billingKeyStore().get(mode,env.VP_BILLING_OWNER_ID);
     if(stored)key=await openBillingKey(stored.ciphertext,env.VP_BILLING_KEYRING_SECRET,mode);
   }
-  return billingConfig({...env,STRIPE_SECRET_KEY:key});
+  return billingConfig(env,key,field=>console.warn("vintedplug billing config:",field));
 }
 export async function billingService() {
   const config=await currentBillingConfig();

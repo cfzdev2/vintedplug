@@ -3,13 +3,18 @@ import {BILLING_APP, BillingError, MONTHLY_PRICE, assertCheckoutPrice, validPric
 import {BillingStore} from "./billing-store.ts";
 
 export type BillingConfig = {key: string; priceId: string; webhookSecret: string; origin: string; mode: BillingMode; portalConfig?: string};
-export function billingConfig(env: {STRIPE_SECRET_KEY?:string; STRIPE_PRICE_ID?:string; STRIPE_WEBHOOK_SECRET?:string; STRIPE_MODE?:string; VP_APP_ORIGIN?:string; STRIPE_PORTAL_CONFIGURATION_ID?:string}): BillingConfig|null {
-  const mode = env.STRIPE_MODE === "live" ? "live" : "test";
-  if (env.STRIPE_MODE && !["test","live"].includes(env.STRIPE_MODE)) return null;
-  if (!env.STRIPE_SECRET_KEY || !new RegExp(`^[sr]k_${mode}_`).test(env.STRIPE_SECRET_KEY) || !env.STRIPE_PRICE_ID?.startsWith("price_") || !env.STRIPE_WEBHOOK_SECRET?.startsWith("whsec_")) return null;
-  let origin: URL; try { origin = new URL(env.VP_APP_ORIGIN ?? ""); } catch { return null; }
-  if (origin.protocol !== "https:" || origin.username || origin.password || origin.pathname !== "/" || origin.search || origin.hash) return null;
-  return {key:env.STRIPE_SECRET_KEY, priceId:env.STRIPE_PRICE_ID, webhookSecret:env.STRIPE_WEBHOOK_SECRET, origin:origin.origin, mode, portalConfig:env.STRIPE_PORTAL_CONFIGURATION_ID || undefined};
+type BillingEnv = Partial<Record<"STRIPE_SECRET_KEY"|"STRIPE_PRICE_ID"|"STRIPE_WEBHOOK_SECRET"|"STRIPE_MODE"|"VP_APP_ORIGIN"|"STRIPE_PORTAL_CONFIGURATION_ID",string>>;
+export function billingConfig(env:BillingEnv, keyOverride?:string, onInvalid?:(field:keyof BillingEnv)=>void):BillingConfig|null {
+  const invalid=(field:keyof BillingEnv)=>{onInvalid?.(field);return null;};
+  const mode=env.STRIPE_MODE??"test";
+  if(mode!=="test"&&mode!=="live")return invalid("STRIPE_MODE");
+  const key=(keyOverride??env.STRIPE_SECRET_KEY)?.trim(),priceId=env.STRIPE_PRICE_ID?.trim(),webhookSecret=env.STRIPE_WEBHOOK_SECRET?.trim();
+  if(!key||!new RegExp(`^[sr]k_${mode}_[A-Za-z0-9_]+$`).test(key))return invalid("STRIPE_SECRET_KEY");
+  if(!priceId||!/^price_[A-Za-z0-9_]+$/.test(priceId))return invalid("STRIPE_PRICE_ID");
+  if(!webhookSecret||!/^whsec_[A-Za-z0-9_+/=-]+$/.test(webhookSecret))return invalid("STRIPE_WEBHOOK_SECRET");
+  let origin:URL;try{origin=new URL(env.VP_APP_ORIGIN??"");}catch{return invalid("VP_APP_ORIGIN");}
+  if(origin.protocol!=="https:"||origin.username||origin.password||origin.pathname!=="/"||origin.search||origin.hash)return invalid("VP_APP_ORIGIN");
+  return {key,priceId,webhookSecret,origin:origin.origin,mode,portalConfig:env.STRIPE_PORTAL_CONFIGURATION_ID||undefined};
 }
 export function stripeClient(config: BillingConfig) {
   return new Stripe(config.key, {httpClient:Stripe.createFetchHttpClient(), maxNetworkRetries:1, timeout:15_000});
