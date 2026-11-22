@@ -63,3 +63,10 @@ next-env.d.ts
 
 # Rebuilt from the pinned local inference dependencies.
 /public/local-ai/
+
+# Output and local account selections for the optional public landing on Firebase.
+/dist-firebase/
+/.firebase/
+/.firebase-render-*/
+/.firebaserc
+/firebase-debug*.log

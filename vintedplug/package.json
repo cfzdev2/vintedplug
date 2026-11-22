@@ -17,6 +17,8 @@
     "test": "node --experimental-strip-types --test tests/finance.test.mjs tests/guide.test.mjs tests/ai-text.test.mjs tests/photos.test.mjs tests/ai-image.test.mjs tests/local-background.test.mjs tests/photo-batch.test.mjs tests/photo-zip.test.mjs tests/billing.test.mjs tests/billing-keys.test.mjs tests/auth.test.mjs",
     "standalone:dev": "node scripts/standalone.mjs dev",
     "standalone:build": "node scripts/standalone.mjs build",
+    "firebase:build": "node scripts/firebase-hosting.mjs",
+    "firebase:test": "node --test tests/firebase-hosting.test.mjs",
     "standalone:check": "node scripts/standalone.mjs check-deploy"
   },
   "dependencies": {
